@@ -128,9 +128,11 @@ function PlansInner() {
           )}
           {!plan.isTrial && plan.daysLeft !== null && (
             <p className="text-xs text-muted">
-              {plan.canceledAtPeriodEnd
-                ? `Válido por mais ${plan.daysLeft} dia(s), sem renovação`
-                : `Renova em ${plan.daysLeft} dia(s)`}
+              {plan.daysLeft > 3650
+                ? "Acesso permanente, sem cobrança"
+                : plan.canceledAtPeriodEnd
+                  ? `Válido por mais ${plan.daysLeft} dia(s), sem renovação`
+                  : `Renova em ${plan.daysLeft} dia(s)`}
             </p>
           )}
         </div>
