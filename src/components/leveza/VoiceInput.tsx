@@ -48,14 +48,25 @@ export function VoiceInput({ onText }: { onText: (text: string) => void }) {
     };
   }, []);
 
-  function start() {
+  async function start() {
     const Ctor = getCtor();
     if (!Ctor) return;
     setError(null);
+    // Pede a permissão do microfone explicitamente (mostra o aviso do celular).
+    try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+      }
+    } catch {
+      setError("O microfone está bloqueado para o Leveza. Toque no cadeado ao lado do endereço (ou em Configurações do app) e permita o microfone.");
+      return;
+    }
     try {
       const r = new Ctor();
       r.lang = "pt-BR";
-      r.continuous = true;
+      // No Android, o modo contínuo repete frases; uma fala por vez é mais estável.
+      r.continuous = false;
       r.interimResults = false;
       r.onresult = (e) => {
         let text = "";
@@ -66,7 +77,9 @@ export function VoiceInput({ onText }: { onText: (text: string) => void }) {
       r.onerror = (e) =>
         setError(
           e.error === "not-allowed" || e.error === "service-not-allowed"
-            ? "O microfone não foi liberado aqui. Use o microfone do teclado do celular para ditar."
+            ? "O microfone não foi liberado. Permita o microfone para o Leveza nas configurações do navegador e tente de novo."
+            : e.error === "network"
+              ? "O reconhecimento de voz precisa de internet. Confira a conexão e tente de novo."
             : e.error === "no-speech"
               ? "Não ouvi nada. Tente de novo, falando perto do celular."
               : "O ditado não funcionou agora. Use o microfone do teclado.",
@@ -94,13 +107,13 @@ export function VoiceInput({ onText }: { onText: (text: string) => void }) {
           <Square /> Parar de ouvir
         </Button>
       ) : (
-        <Button variant="secondary" block onClick={start} disabled={supported === null}>
+        <Button variant="secondary" block onClick={() => void start()} disabled={supported === null}>
           <Mic /> Falar o que comi
         </Button>
       )}
       {listening && (
         <p role="status" className="text-center text-xs font-semibold text-orange-ink">
-          Ouvindo… fale os alimentos e as quantidades.
+          Ouvindo… fale os alimentos e as quantidades. Quando parar de falar, o texto aparece acima. Toque de novo para acrescentar mais.
         </p>
       )}
       {error && (
