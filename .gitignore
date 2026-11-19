@@ -10,3 +10,4 @@ playwright-report
 test-results
 .preview-stash
 coverage
+dist-preview
