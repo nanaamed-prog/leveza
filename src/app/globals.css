@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* ===== Design tokens Leveza (Opção 03 — Moderna) ===== */
+:root {
+  --brand-forest: #0f5132;
+  --brand-forest-hover: #0b3f27;
+  --brand-mineral: #2e7d6b;
+  --brand-sage: #a3c9a8;
+  --brand-sage-soft: #e4efe4;
+  --brand-orange: #f2994a;
+  --brand-orange-soft: #fdeedf;
+  --brand-orange-ink: #9a4d0c; /* laranja escuro p/ texto com contraste AA */
+  --surface-canvas: #f6f3ec;
+  --surface-card: #ffffff;
+  --text-primary: #17352a;
+  --text-secondary: #5c6b62;
+  --border-subtle: #e3e9e1;
+  --semantic-error: #b42318;
+  --semantic-error-soft: #fdecea;
+  --semantic-success: #28724f;
+  --focus-ring: #f2994a;
+  --radius-card: 22px;
+  --radius-button: 16px;
+  --shadow-card: 0 1px 2px rgb(23 53 42 / 0.04), 0 6px 18px -8px rgb(23 53 42 / 0.12);
+  --bottom-nav-h: 68px;
+}
+
+@theme inline {
+  --color-forest: var(--brand-forest);
+  --color-forest-hover: var(--brand-forest-hover);
+  --color-mineral: var(--brand-mineral);
+  --color-sage: var(--brand-sage);
+  --color-sage-soft: var(--brand-sage-soft);
+  --color-orange: var(--brand-orange);
+  --color-orange-soft: var(--brand-orange-soft);
+  --color-orange-ink: var(--brand-orange-ink);
+  --color-canvas: var(--surface-canvas);
+  --color-card: var(--surface-card);
+  --color-ink: var(--text-primary);
+  --color-muted: var(--text-secondary);
+  --color-line: var(--border-subtle);
+  --color-error: var(--semantic-error);
+  --color-error-soft: var(--semantic-error-soft);
+  --color-success: var(--semantic-success);
+  --radius-card: var(--radius-card);
+  --radius-button: var(--radius-button);
+  --shadow-card: var(--shadow-card);
+  --font-display:
+    "Montserrat", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans:
+    "Nunito Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Escala fluida */
+  --text-display: clamp(1.5rem, 1.25rem + 1.2vw, 2rem);
+  --text-title: clamp(1.15rem, 1.05rem + 0.5vw, 1.35rem);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--surface-canvas);
+}
+
+body {
+  background: var(--surface-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.safe-bottom {
+  padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #eef1ec 25%, #f7f8f5 50%, #eef1ec 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

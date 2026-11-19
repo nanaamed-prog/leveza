@@ -1,0 +1,96 @@
+import { test, expect, type Page } from "@playwright/test";
+
+/** Fluxo completo no Modo demonstração (sem Supabase): onboarding → registros → regras de segurança. */
+
+async function onboard(page: Page, opts: { breastfeeding?: boolean } = {}) {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Começar" }).click();
+  await page.getByRole("button", { name: "Entrar no modo demonstração" }).click();
+  await expect(page.getByRole("heading", { name: "Consentimento" })).toBeVisible();
+  await page.getByText("Li e aceito os termos").click();
+  await page.getByText("Autorizo o tratamento dos meus dados de saúde").click();
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  await page.getByLabel("Data de nascimento").fill("1990-05-10");
+  const answer = async (legend: string, option: string) =>
+    page.getByRole("group", { name: legend }).getByText(option, { exact: true }).click();
+  await answer("Você está gestante?", "Não");
+  await answer("Você está amamentando?", opts.breastfeeding ? "Sim" : "Não");
+  await answer("Você tem ou já teve algum transtorno alimentar?", "Não");
+  await answer("Você tem diabetes?", "Não");
+  await answer("Usa medicamentos que podem causar hipoglicemia?", "Não");
+  await page.getByText("Nenhuma destas").click();
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  await page.getByLabel("Como podemos te chamar?").fill("Ana");
+  await page.getByLabel("Altura (cm)").fill("165");
+  await page.getByLabel("Peso atual (kg)").fill("68,5");
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByRole("button", { name: "Salvar e continuar" }).click();
+  await page.getByRole("button", { name: "Ir para o início" }).click();
+  await expect(page.getByRole("heading", { name: /Ana/ })).toBeVisible();
+}
+
+test("onboarding, registros e dashboard real", async ({ page }) => {
+  await onboard(page);
+  await expect(page.getByText("Modo demonstração — dados salvos só neste aparelho")).toBeVisible();
+  await expect(page.getByText("Nenhuma refeição registrada hoje")).toBeVisible();
+  await page.screenshot({ path: "test-results/01-dashboard-vazio.png", fullPage: true });
+
+  // Água
+  await page.getByRole("link", { name: "Registrar água" }).click();
+  await page.getByRole("button", { name: "300 ml" }).click();
+  await expect(page.getByRole("img", { name: /Hidratação/ })).toBeVisible();
+  await expect(page.getByText("300", { exact: true }).first()).toBeVisible();
+
+  // Refeição manual
+  await page.goto("/app/alimentacao/nova");
+  await page.getByLabel("Buscar na base nutricional").fill("arroz branco");
+  await page.getByRole("button", { name: /Arroz branco cozido/ }).click();
+  await page.getByRole("button", { name: "Adicionar", exact: true }).click();
+  await page.getByLabel("Buscar na base nutricional").fill("feijao carioca");
+  await page.getByRole("button", { name: /Feijão carioca cozido/ }).click();
+  await page.getByRole("button", { name: "Adicionar", exact: true }).click();
+  await page.screenshot({ path: "test-results/02-nova-refeicao.png", fullPage: true });
+  await page.getByRole("button", { name: "Salvar refeição" }).click();
+  await expect(page.getByRole("heading", { name: "Alimentação" })).toBeVisible();
+  await expect(page.getByText("Arroz branco cozido")).toBeVisible();
+  await page.screenshot({ path: "test-results/03-alimentacao.png", fullPage: true });
+
+  // Dashboard reflete
+  await page.getByRole("link", { name: "Início" }).click();
+  await expect(page.getByText("kcal consumidas")).toBeVisible();
+  await expect(page.getByText("Gasto estimado até agora")).toBeVisible();
+  await page.screenshot({ path: "test-results/04-dashboard.png", fullPage: true });
+
+  // Jejum disponível com protocolos e bloqueio de 18 h sem confirmação
+  await page.goto("/app/jejum");
+  await expect(page.getByRole("button", { name: "Iniciar jejum de 12 h" })).toBeEnabled();
+  await page.getByRole("button", { name: /^18 h/ }).click();
+  await expect(page.getByRole("button", { name: "Iniciar jejum de 18 h" })).toBeDisabled();
+  await page.getByRole("button", { name: /^16 h/ }).click();
+  await page.getByRole("button", { name: "Iniciar jejum de 16 h" }).click();
+  await expect(page.getByText("Tempo decorrido")).toBeVisible();
+  await page.screenshot({ path: "test-results/05-jejum.png", fullPage: true });
+
+  // Atividade
+  await page.goto("/app/movimento?novo=1");
+  await page.getByRole("button", { name: "Registrar atividade" }).last().click();
+  await expect(page.getByText(/Caminhada/).first()).toBeVisible();
+
+  // Navegação inferior acessível
+  await expect(
+    page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link"),
+  ).toHaveCount(5);
+});
+
+test("lactante: jejum bloqueado e modo dedicado", async ({ page }) => {
+  await onboard(page, { breastfeeding: true });
+  await expect(page.getByText("Modo Lactante ativo")).toBeVisible();
+  await page.goto("/app/jejum");
+  await expect(page.getByText("Indisponível durante a amamentação")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Iniciar jejum/ })).toHaveCount(0);
+  await page.goto("/app/lactante");
+  await expect(page.getByRole("heading", { name: "Modo Lactante" })).toBeVisible();
+  await page.screenshot({ path: "test-results/06-lactante.png", fullPage: true });
+});
