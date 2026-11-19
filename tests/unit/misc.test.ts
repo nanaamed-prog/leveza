@@ -117,3 +117,30 @@ describe("datas e fusos", () => {
     expect(toLocalInput(ms, "America/Sao_Paulo")).toBe("2026-11-19T07:30");
   });
 });
+
+import { cumulativeBalanceEstimate, KCAL_PER_KG } from "@/lib/calc/weight";
+
+describe("saldo acumulado e peso estimado (7.700 kcal ≈ 1 kg)", () => {
+  it("soma só dias completos com refeição e converte em kg", () => {
+    const r = cumulativeBalanceEstimate(
+      [
+        { date: "2026-11-15", balance: -500 },
+        { date: "2026-11-16", balance: null }, // sem refeição registrada
+        { date: "2026-11-17", balance: -300 },
+        { date: "2026-11-18", balance: 200 },
+        { date: "2026-11-19", balance: -1500 }, // hoje, em andamento
+      ],
+      "2026-11-19",
+    );
+    expect(r.days).toBe(3);
+    expect(r.totalBalanceKcal).toBe(-600);
+    expect(r.estimatedKg).toBeCloseTo(-600 / KCAL_PER_KG, 6);
+    expect(r.averageDailyKcal).toBe(-200);
+  });
+  it("7.700 kcal de déficit ≈ −1 kg", () => {
+    expect(cumulativeBalanceEstimate([{ date: "2026-11-01", balance: -7700 }], "2026-11-19").estimatedKg).toBe(-1);
+  });
+  it("sem dias válidos", () => {
+    expect(cumulativeBalanceEstimate([], "2026-11-19").averageDailyKcal).toBeNull();
+  });
+});

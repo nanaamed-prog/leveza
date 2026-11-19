@@ -136,3 +136,32 @@ test("meia porção e alimentos do dia a dia", async ({ page }) => {
   await page.getByRole("button", { name: /Metade da porção/ }).click();
   await expect(page.getByLabel("Porção (g)")).toHaveValue("12.5");
 });
+
+async function mealYesterday(page: Page) {
+  await page.goto("/app/alimentacao/nova");
+  const d = new Date(Date.now() - 86_400_000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  await page.getByLabel("Data e hora").fill(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T12:00`);
+  await page.getByLabel("Buscar na base nutricional").fill("arroz branco");
+  await page.getByRole("button", { name: /Arroz branco cozido/ }).click();
+  await page.getByRole("button", { name: "Adicionar", exact: true }).click();
+  await page.getByRole("button", { name: "Salvar refeição" }).click();
+  await expect(page.getByRole("heading", { name: "Alimentação" })).toBeVisible();
+}
+
+test("saldo acumulado e peso estimado (7.700 kcal ≈ 1 kg)", async ({ page }) => {
+  await onboard(page);
+  await mealYesterday(page);
+  await page.getByRole("link", { name: "Evolução" }).click();
+  await expect(page.getByText("Peso estimado pelo saldo")).toBeVisible();
+  await expect(page.getByText(/Saldo em 1 dia/)).toBeVisible();
+  await page.screenshot({ path: "test-results/09-saldo.png", fullPage: true });
+});
+
+test("lactante: saldo aparece, estimativa de perda de peso não", async ({ page }) => {
+  await onboard(page, { breastfeeding: true });
+  await mealYesterday(page);
+  await page.getByRole("link", { name: "Evolução" }).click();
+  await expect(page.getByText(/Saldo em 1 dia/)).toBeVisible();
+  await expect(page.getByText("Peso estimado pelo saldo")).toHaveCount(0);
+});

@@ -7,6 +7,7 @@ import { Card, CardHint, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PeriodFilter, SimpleBarChart, SimpleLineChart, CHART } from "@/components/leveza/charts";
 import { MacroRing } from "@/components/leveza/MacroRing";
+import { BalanceEstimateCard } from "@/components/leveza/BalanceEstimateCard";
 import { useAppData, useRecords } from "@/lib/data/provider";
 import { usePersonalBasics } from "@/lib/data/useDaySummary";
 import { addDays, dayRange, formatDateShort } from "@/lib/dates";
@@ -205,6 +206,8 @@ export default function ReportsPage() {
           <Empty />
         )}
       </Card>
+
+      <BalanceEstimateCard rows={rows} today={today} days={days} />
 
       <Card>
         <CardTitle className="mb-3">Distribuição de macros no período</CardTitle>

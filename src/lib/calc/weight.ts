@@ -114,3 +114,29 @@ export function suggestIntakeTarget(params: {
     note: "Até 15% abaixo do gasto estimado, sem ficar abaixo do seu metabolismo basal estimado.",
   };
 }
+
+/**
+ * Regra aproximada: ~7.700 kcal de saldo acumulado ≈ 1 kg de gordura corporal.
+ * É uma estimativa teórica — na prática a perda costuma ser menor com o tempo (adaptação do
+ * metabolismo, água, glicogênio) e a balança oscila por outros motivos.
+ */
+export const KCAL_PER_KG = 7700;
+
+export interface CumulativeEstimate {
+  days: number; // dias considerados (com refeições registradas e já encerrados)
+  totalBalanceKcal: number; // negativo = déficit
+  estimatedKg: number; // negativo = perda estimada
+  averageDailyKcal: number | null;
+}
+
+/** Soma o saldo (consumido − gasto) dos dias completos. Exclui o dia em andamento e dias sem refeição. */
+export function cumulativeBalanceEstimate(rows: { date: string; balance: number | null }[], today: string): CumulativeEstimate {
+  const valid = rows.filter((r) => r.balance !== null && r.date < today);
+  const total = valid.reduce((s, r) => s + (r.balance as number), 0);
+  return {
+    days: valid.length,
+    totalBalanceKcal: total,
+    estimatedKg: total / KCAL_PER_KG,
+    averageDailyKcal: valid.length ? total / valid.length : null,
+  };
+}

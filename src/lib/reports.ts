@@ -51,8 +51,9 @@ export function buildDailyReport(p: {
     const dayFoods = p.foods.filter((f) => localDateKey(Date.parse(f.eaten_at), p.tz) === date);
     const its = dayFoods.flatMap((f) => itemsByEntry.get(f.id) ?? []);
     const consumed = dayFoods.reduce((s, f) => s + f.total_kcal, 0);
+    // Peso vigente no dia; antes da primeira pesagem, usa a pesagem mais antiga disponível.
     const weightThatDay =
-      sortedW.filter((w) => Date.parse(w.measured_at) < end).at(-1)?.weight_kg ?? null;
+      sortedW.filter((w) => Date.parse(w.measured_at) < end).at(-1)?.weight_kg ?? sortedW[0]?.weight_kg ?? null;
     const measuredToday =
       sortedW.filter((w) => localDateKey(Date.parse(w.measured_at), p.tz) === date).at(-1)
         ?.weight_kg ?? null;

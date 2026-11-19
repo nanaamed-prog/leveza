@@ -9,6 +9,8 @@ import { Card, CardHint, CardTitle } from "@/components/ui/card";
 import { ConfirmationDialog, Sheet } from "@/components/ui/dialog";
 import { WeightForm } from "@/components/leveza/WeightForm";
 import { EmptyState } from "@/components/leveza/EmptyState";
+import { BalanceEstimateCard } from "@/components/leveza/BalanceEstimateCard";
+import { useDailyReport } from "@/lib/data/useDailyReport";
 import { PeriodFilter, SimpleLineChart, CHART } from "@/components/leveza/charts";
 import { useAppData, useRecords } from "@/lib/data/provider";
 import { addDays, dayRange, formatDateShort, formatTime, localDateKey } from "@/lib/dates";
@@ -20,6 +22,7 @@ export default function EvolutionPage() {
   const { tz, store, refresh, goal } = useAppData();
   const today = todayKey(tz);
   const [period, setPeriod] = useState(30);
+  const report = useDailyReport(period);
   const all = useRecords("weight_entries", { order: "asc", limit: 2000 });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<WeightEntry | null>(null);
@@ -75,6 +78,8 @@ export default function EvolutionPage() {
         }
       />
       <PeriodFilter value={period} onChange={setPeriod} />
+
+      <BalanceEstimateCard rows={report.rows} today={report.today} days={period} />
 
       {points.length === 0 ? (
         <EmptyState
