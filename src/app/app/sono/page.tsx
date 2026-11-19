@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Moon, Pencil, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,27 @@ function SleepInner() {
         action={
           <Button size="icon" aria-label="Registrar sono" onClick={() => setOpen(true)}>
             <Plus />
+            <div
+              role="tablist"
+              aria-label="Movimento e sono"
+              className="grid grid-cols-2 rounded-full bg-line/60 p-1"
+            >
+              <Link
+                role="tab"
+                aria-selected="false"
+                href="/app/movimento"
+                className="flex min-h-10 items-center justify-center rounded-full text-sm font-semibold text-muted"
+              >
+                Atividade física
+              </Link>
+              <span
+                role="tab"
+                aria-selected="true"
+                className="flex min-h-10 items-center justify-center rounded-full bg-forest text-sm font-semibold text-white"
+              >
+                Sono
+              </span>
+            </div>
           </Button>
         }
       />

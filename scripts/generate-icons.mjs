@@ -8,7 +8,7 @@ const jobs = [
   ["public/icons/maskable.svg", "public/icons/maskable-512.png", 512, 512],
   ["public/icons/icon.svg", "public/icons/apple-touch-icon.png", 180, 180],
   ["public/icons/splash.svg", "public/icons/splash-1290x2796.png", 1290, 2796],
-  ["public/brand/leveza-horizontal.svg", "public/brand/leveza-horizontal.png", 960, 256],
+  ["public/brand/leveza-horizontal.svg", "public/brand/leveza-horizontal.png", 1000, 256],
 ];
 for (const [src, out, w, h] of jobs) {
   const svg = await readFile(src);

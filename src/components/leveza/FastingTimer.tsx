@@ -22,12 +22,11 @@ export function FastingTimer({
         value={s.progress}
         size={220}
         stroke={16}
-        color="var(--brand-orange)"
+        color="var(--brand-forest)"
+        track="var(--brand-sage-soft)"
         label={`Jejum de ${hours} horas`}
       >
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-          Tempo decorrido
-        </span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted">Em jejum</span>
         <span className="tabular font-display text-3xl font-bold text-ink" aria-live="off">
           {formatHms(s.elapsedMs)}
         </span>

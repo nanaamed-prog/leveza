@@ -41,8 +41,10 @@ export function ActivityPicker({
   weightKg,
   factor,
   initial,
+  initialType,
   onSubmit,
 }: {
+  initialType?: string;
   tz: string;
   weightKg: number | null;
   factor: number;

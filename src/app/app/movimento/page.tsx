@@ -2,7 +2,18 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Footprints, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Bike,
+  Dumbbell,
+  Footprints,
+  Music,
+  Pencil,
+  PersonStanding,
+  Plus,
+  Trash2,
+  Zap,
+} from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -35,6 +46,7 @@ function MovementInner() {
   const acts = useRecords("activity_entries", { from: new Date(from).toISOString() });
   const [open, setOpen] = useState(() => params.get("novo") === "1");
   const [editing, setEditing] = useState<ActivityEntry | null>(null);
+  const [presetType, setPresetType] = useState<string | undefined>(undefined);
   const [toDelete, setToDelete] = useState<ActivityEntry | null>(null);
 
   const mins = (a: ActivityEntry) => (Date.parse(a.ended_at) - Date.parse(a.started_at)) / 60_000;
@@ -83,6 +95,76 @@ function MovementInner() {
           </Button>
         }
       />
+      <div
+        role="tablist"
+        aria-label="Movimento e sono"
+        className="grid grid-cols-2 rounded-full bg-line/60 p-1"
+      >
+        <span
+          role="tab"
+          aria-selected="true"
+          className="flex min-h-10 items-center justify-center rounded-full bg-forest text-sm font-semibold text-white"
+        >
+          Atividade física
+        </span>
+        <Link
+          role="tab"
+          aria-selected="false"
+          href="/app/sono"
+          className="flex min-h-10 items-center justify-center rounded-full text-sm font-semibold text-muted"
+        >
+          Sono
+        </Link>
+      </div>
+
+      <section
+        aria-label="Registrar atividade"
+        className="rounded-card border border-line bg-card p-3 shadow-card"
+      >
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 font-display font-semibold">
+            <Footprints className="size-5 text-forest" aria-hidden /> Registrar atividade
+          </h2>
+          <button
+            type="button"
+            onClick={() => {
+              setPresetType(undefined);
+              setOpen(true);
+            }}
+            aria-label="Outra atividade"
+            className="flex size-9 items-center justify-center rounded-full bg-forest text-white"
+          >
+            <Plus className="size-5" />
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              ["caminhada", "Caminhada", PersonStanding],
+              ["musculacao", "Musculação", Dumbbell],
+              ["danca", "Dança", Music],
+              ["pilates", "Pilates", PersonStanding],
+              ["bicicleta", "Bike", Bike],
+              ["funcional", "Funcional", Zap],
+            ] as const
+          ).map(([id, label, Icon]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                setPresetType(id);
+                setEditing(null);
+                setOpen(true);
+              }}
+              className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-line bg-canvas text-xs font-semibold text-ink hover:border-sage"
+            >
+              <Icon className="size-6 text-forest" aria-hidden />
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <div className="grid grid-cols-3 gap-2 text-center">
         {[
           ["Hoje", totals.dia],
@@ -173,7 +255,8 @@ function MovementInner() {
         title={editing ? "Editar atividade" : "Registrar atividade"}
       >
         <ActivityPicker
-          key={editing?.id ?? "novo"}
+          initialType={presetType}
+          key={editing?.id ?? `novo-${presetType ?? ""}`}
           tz={tz}
           weightKg={basics.weight}
           factor={basics.factor}

@@ -10,7 +10,7 @@ import { fmt1 } from "@/lib/utils";
 export const MACRO_COLORS: Record<MacroKey, string> = {
   protein: "var(--brand-forest)",
   carbs: "var(--brand-orange)",
-  fat: "var(--brand-mineral)",
+  fat: "#E2A93B",
 };
 
 /** Rosca de distribuição energética dos macros (% das kcal dos três macros). */

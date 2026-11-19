@@ -139,7 +139,7 @@ export default function FastingPage() {
             hours={active.protocol_hours}
             tz={tz}
           />
-          <Button variant="outline" block size="lg" onClick={() => setConfirmEnd(true)}>
+          <Button variant="accent" block size="lg" onClick={() => setConfirmEnd(true)}>
             Encerrar jejum
           </Button>
           <p className="text-center text-xs text-muted">
@@ -150,7 +150,7 @@ export default function FastingPage() {
         <Card className="space-y-4">
           <fieldset>
             <legend className="mb-2 font-display font-semibold">Duração</legend>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
               {FASTING_PROTOCOLS.map((p) => {
                 const st = eligibility.fastingProtocols[p].status;
                 const sel = protocol === p;
@@ -163,11 +163,13 @@ export default function FastingPage() {
                       setProtocol(p);
                       setError(null);
                     }}
-                    className={`flex min-h-14 flex-col items-center justify-center rounded-[14px] border text-sm font-bold ${sel ? "border-orange bg-orange-soft text-orange-ink" : "border-line bg-card text-ink"}`}
+                    className={`flex min-h-12 min-w-16 shrink-0 flex-col items-center justify-center rounded-full border px-3 text-sm font-bold ${sel ? "border-forest bg-forest text-white" : "border-line bg-card text-ink"}`}
                   >
                     {p} h
                     {st !== "disponivel" && (
-                      <span className="flex items-center gap-0.5 text-[0.65rem] font-semibold text-muted">
+                      <span
+                        className={`flex items-center gap-0.5 text-[0.6rem] font-semibold ${sel ? "text-sage" : "text-muted"}`}
+                      >
                         <Lock className="size-3" aria-hidden /> c/ profissional
                       </span>
                     )}

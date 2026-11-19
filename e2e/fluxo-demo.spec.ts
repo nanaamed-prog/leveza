@@ -59,7 +59,7 @@ test("onboarding, registros e dashboard real", async ({ page }) => {
 
   // Dashboard reflete
   await page.getByRole("link", { name: "Início" }).click();
-  await expect(page.getByText("kcal consumidas")).toBeVisible();
+  await expect(page.getByText("Consumidas", { exact: true })).toBeVisible();
   await expect(page.getByText("Gasto estimado até agora")).toBeVisible();
   await page.screenshot({ path: "test-results/04-dashboard.png", fullPage: true });
 
@@ -70,7 +70,7 @@ test("onboarding, registros e dashboard real", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Iniciar jejum de 18 h" })).toBeDisabled();
   await page.getByRole("button", { name: /^16 h/ }).click();
   await page.getByRole("button", { name: "Iniciar jejum de 16 h" }).click();
-  await expect(page.getByText("Tempo decorrido")).toBeVisible();
+  await expect(page.getByText("Em jejum", { exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/05-jejum.png", fullPage: true });
 
   // Atividade
