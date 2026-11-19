@@ -8,6 +8,9 @@ import { Card, CardHint, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Field, Textarea } from "@/components/ui/form";
 import { useAppData, useRecords } from "@/lib/data/provider";
+import { ConfirmationDialog } from "@/components/ui/dialog";
+import { leaveLactationMode } from "@/lib/data/leaveLactation";
+import { useRouter } from "next/navigation";
 import { formatDateShort, formatTime, localDateKey } from "@/lib/dates";
 
 function Scale({
@@ -40,7 +43,10 @@ function Scale({
 }
 
 export default function LactationPage() {
-  const { store, refresh, tz, eligibility } = useAppData();
+  const { store, refresh, tz, eligibility, screening, profile } = useAppData();
+  const router = useRouter();
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
   const logs = useRecords("wellbeing_entries", { limit: 14 });
   const [v, setV] = useState<{
     hunger: number | null;
@@ -192,6 +198,41 @@ export default function LactationPage() {
           </ul>
         </Card>
       )}
+      {eligibility.mode === "lactante" && (
+        <Card className="space-y-2">
+          <CardTitle>Parou de amamentar?</CardTitle>
+          <CardHint>
+            Você pode desativar o Modo Lactante quando quiser. Atualizamos sua triagem e o app volta
+            ao modo padrão. Jejum e metas de déficit só aparecem se o restante da sua triagem
+            permitir.
+          </CardHint>
+          <Button variant="outline" block onClick={() => setConfirmLeave(true)}>
+            Não estou mais amamentando — desativar Modo Lactante
+          </Button>
+          {leaveError && (
+            <p role="alert" className="text-sm font-semibold text-error">
+              {leaveError}
+            </p>
+          )}
+        </Card>
+      )}
+      <ConfirmationDialog
+        open={confirmLeave}
+        onOpenChange={setConfirmLeave}
+        title="Desativar o Modo Lactante?"
+        description="Vamos registrar na sua triagem que você não está mais amamentando. Se voltar a amamentar, é só atualizar a triagem em Perfil."
+        confirmLabel="Desativar"
+        onConfirm={async () => {
+          if (!store) return;
+          try {
+            await leaveLactationMode(store, screening, profile);
+            refresh();
+            router.push("/app");
+          } catch (e) {
+            setLeaveError(e instanceof Error ? e.message : "Não foi possível atualizar agora.");
+          }
+        }}
+      />
     </div>
   );
 }

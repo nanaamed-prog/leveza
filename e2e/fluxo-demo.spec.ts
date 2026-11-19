@@ -200,3 +200,14 @@ test("tela de assinatura mostra os três planos", async ({ page }) => {
   await expect(page.getByText("R$ 34,90")).toBeVisible();
   await page.screenshot({ path: "test-results/10-planos.png", fullPage: true });
 });
+
+test("desativar o Modo Lactante atualiza a triagem e libera o modo padrão", async ({ page }) => {
+  await onboard(page, { breastfeeding: true });
+  await page.getByRole("link", { name: /Modo Lactante ativo/ }).click();
+  await page.getByRole("button", { name: /desativar Modo Lactante/ }).click();
+  await page.getByRole("button", { name: "Desativar", exact: true }).click();
+  await expect(page.getByRole("heading", { name: /Ana/ })).toBeVisible();
+  await expect(page.getByText("Modo Lactante ativo")).toHaveCount(0);
+  await page.goto("/app/jejum");
+  await expect(page.getByRole("button", { name: "Iniciar jejum de 12 h" })).toBeEnabled();
+});
