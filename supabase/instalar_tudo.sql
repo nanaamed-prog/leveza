@@ -1,5 +1,5 @@
 -- LEVEZA — instalação completa do banco (cole tudo de uma vez no SQL Editor do Supabase e clique em Run)
--- Equivale a rodar os 4 arquivos de supabase/migrations na ordem.
+-- Equivale a rodar os arquivos de supabase/migrations na ordem.
 
 -- ===== supabase/migrations/20261119000001_schema.sql =====
 -- =====================================================================
@@ -487,3 +487,12 @@ create policy food_photos_update_own on storage.objects for update to authentica
 
 create policy food_photos_delete_own on storage.objects for delete to authenticated
   using (bucket_id = 'food-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- ===== supabase/migrations/20261119000005_hardening.sql =====
+-- LEVEZA — endurecimento recomendado pelo Security Advisor do Supabase
+alter function public.set_updated_at() set search_path = '';
+alter function public.fasting_update_guard() set search_path = '';
+revoke all on function public.screening_flags(uuid) from public, anon, authenticated;
+revoke execute on function public.enforce_fasting_rules() from public, anon, authenticated;
+revoke execute on function public.enforce_goal_rules() from public, anon, authenticated;
+revoke execute on function public.close_fasting_if_ineligible() from public, anon, authenticated;
