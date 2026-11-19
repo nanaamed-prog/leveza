@@ -15,6 +15,7 @@ import {
   ListChecks,
   Moon,
   Droplets,
+  Waves,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -86,6 +87,7 @@ export default function ProfilePage() {
     { href: "/app/habitos", label: "Plano 5+2", icon: ListChecks },
     { href: "/app/sono", label: "Sono", icon: Moon },
     { href: "/app/agua", label: "Água", icon: Droplets },
+    { href: "/app/intestino", label: "Meu intestino", icon: Waves },
     { href: "/app/receitas", label: "Receitas", icon: BookOpen },
     { href: "/app/relatorios", label: "Relatórios", icon: ChartColumn },
     { href: "/app/configuracoes", label: "Configurações e privacidade", icon: Settings },

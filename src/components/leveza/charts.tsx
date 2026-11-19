@@ -56,7 +56,9 @@ export function SimpleBarChart({
   unit,
   title,
   description,
+  integer = false,
 }: {
+  integer?: boolean;
   data: Record<string, unknown>[];
   xKey: string;
   bars: { key: string; name: string; color: string }[];
@@ -69,7 +71,7 @@ export function SimpleBarChart({
       <BarChart data={data} margin={{ top: 8, right: 4, left: -16, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke={CHART.grid} />
         <XAxis dataKey={xKey} {...axis} interval="preserveStartEnd" />
-        <YAxis {...axis} width={44} />
+        <YAxis {...axis} width={44} allowDecimals={!integer} />
         <Tooltip
           formatter={(v) => [`${Math.round(Number(v)).toLocaleString("pt-BR")} ${unit}`]}
           cursor={{ fill: "rgba(163,201,168,0.18)" }}

@@ -29,6 +29,19 @@ Regras:
 - Se não houver comida na imagem, retorne {"itens":[],"observacao":"Não identifiquei alimentos."}.
 - Não faça comentários sobre saúde, dieta ou peso.`;
 
+const TEXT_PROMPT = `Você interpreta descrições de refeições escritas ou ditadas em português do Brasil para um diário alimentar.
+Transforme o texto em uma lista de alimentos com a porção estimada em gramas (ou ml para bebidas).
+Responda SOMENTE com JSON válido, sem texto extra, no formato:
+{"itens":[{"nome":"pão francês","gramas_estimadas":50,"preparo":null,"confianca":"media"}],"observacao":null}
+Regras:
+- Use nomes simples (ex.: "arroz branco cozido", "feijão carioca cozido", "ovo cozido").
+- Se a pessoa informou gramas ou ml, use exatamente esse valor e "confianca":"alta".
+- Medidas caseiras (colher, concha, copo, fatia, unidade) viram gramas aproximadas com "confianca":"media".
+- Sem quantidade: porção típica e "confianca":"baixa".
+- Não invente alimentos que não foram citados. Não comente saúde, dieta ou peso.
+Texto da pessoa:
+`;
+
 export function visionConfigured(): boolean {
   return Boolean(process.env.AI_VISION_API_KEY && process.env.AI_VISION_PROVIDER);
 }
@@ -90,6 +103,51 @@ export async function analyzeMealImage(bytes: Uint8Array, mediaType: string): Pr
             ],
           },
         ],
+      }),
+    });
+    if (!res.ok) throw new Error(`provider_${res.status}`);
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    text = json.choices?.[0]?.message?.content ?? "";
+  } else {
+    throw new Error("provider_unknown");
+  }
+  return AnalysisSchema.parse(extractJson(text));
+}
+
+/** Interpreta descrição em texto (digitada ou ditada). Mesmo provedor e chave da análise de foto. */
+export async function analyzeMealText(description: string): Promise<Analysis> {
+  const provider = process.env.AI_VISION_PROVIDER;
+  const key = process.env.AI_VISION_API_KEY!;
+  const prompt = TEXT_PROMPT + description.slice(0, 1500);
+  const signal = AbortSignal.timeout(30_000);
+  let text: string;
+  if (provider === "anthropic") {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal,
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: process.env.AI_VISION_MODEL || "claude-sonnet-5-5",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    if (!res.ok) throw new Error(`provider_${res.status}`);
+    const json = (await res.json()) as { content?: { type: string; text?: string }[] };
+    text = json.content?.find((c) => c.type === "text")?.text ?? "";
+  } else if (provider === "openai") {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      signal,
+      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: process.env.AI_VISION_MODEL || "gpt-4.1-mini",
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: prompt }],
       }),
     });
     if (!res.ok) throw new Error(`provider_${res.status}`);

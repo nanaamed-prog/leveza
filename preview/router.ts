@@ -17,7 +17,10 @@ export function navigate(href: string, mode: "push" | "replace" = "push") {
     return;
   }
   const next = parse(href);
-  const stack = mode === "push" ? [...state.stack, state.path + (state.search ? "?" + state.search : "")] : state.stack;
+  const stack =
+    mode === "push"
+      ? [...state.stack, state.path + (state.search ? "?" + state.search : "")]
+      : state.stack;
   state = { ...next, stack };
   listeners.forEach((l) => l());
   try {
@@ -41,5 +44,9 @@ const subscribe = (l: () => void) => {
 };
 
 export function useRoute(): State {
-  return useSyncExternalStore(subscribe, () => state, () => state);
+  return useSyncExternalStore(
+    subscribe,
+    () => state,
+    () => state,
+  );
 }

@@ -167,6 +167,14 @@ export interface WellbeingEntry extends Row {
   notes: string | null;
 }
 
+export interface BowelEntry extends Row {
+  logged_at: string;
+  bristol: number | null; // 1–7 (escala de Bristol)
+  effort: "nenhum" | "algum" | "muito" | null;
+  discomfort: boolean;
+  notes: string | null;
+}
+
 export interface Tables {
   profiles: Profile;
   user_preferences: UserPreferences;
@@ -184,6 +192,7 @@ export interface Tables {
   recipe_items: RecipeItem;
   consents: Consent;
   wellbeing_entries: WellbeingEntry;
+  bowel_entries: BowelEntry;
 }
 
 export type TableName = keyof Tables;
@@ -207,6 +216,7 @@ export const DATE_FIELD: Partial<Record<TableName, string>> = {
   goals: "created_at",
   consents: "created_at",
   wellbeing_entries: "logged_at",
+  bowel_entries: "logged_at",
   recipes: "created_at",
 };
 
@@ -227,6 +237,7 @@ export const ALL_TABLES: TableName[] = [
   "recipe_items",
   "consents",
   "wellbeing_entries",
+  "bowel_entries",
 ];
 
 export const CONSENT_VERSION = "2026-11-v1";

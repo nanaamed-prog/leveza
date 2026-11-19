@@ -2,11 +2,13 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Camera, Plus, Search, Sparkles } from "lucide-react";
+import { Camera, PenLine, Plus, Search, Sparkles, WandSparkles } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardHint, CardTitle } from "@/components/ui/card";
-import { Field, Input, Select } from "@/components/ui/form";
+import { Field, Input, Select, Textarea } from "@/components/ui/form";
+import { VoiceInput } from "@/components/leveza/VoiceInput";
+import { parseMealDescription, EXAMPLE_DESCRIPTION } from "@/lib/nutrition/parseMeal";
 import { Sheet } from "@/components/ui/dialog";
 import { FoodItemsEditor } from "@/components/leveza/FoodItemsEditor";
 import { FoodPhotoCapture } from "@/components/leveza/FoodPhotoCapture";
@@ -40,14 +42,47 @@ interface AnalyzedItem {
   confidence: "alta" | "media" | "baixa";
 }
 
+function unmatchedDraft(name: string, grams: number, preparation: string | null): DraftItem {
+  return {
+    key: draftKey(),
+    refId: null,
+    name,
+    category: null,
+    grams: grams > 0 ? grams : 100,
+    unit: "g",
+    quantity: grams > 0 ? grams : 100,
+    kcal: 0,
+    protein_g: 0,
+    carbs_g: 0,
+    fat_g: 0,
+    fiber_g: null,
+    nutrition_source: "Não encontrado na base — preencha os valores",
+    source_consulted_at: null,
+    confidence: "baixa",
+    edited: false,
+    preparation,
+  };
+}
+
+function aiItemsToDrafts(list: AnalyzedItem[]): DraftItem[] {
+  return list.map((it) => {
+    const ref = bestMatch(it.name);
+    if (ref) return { ...draftFromRef(ref, it.grams, it.confidence), preparation: it.preparation };
+    return unmatchedDraft(it.name, it.grams, it.preparation);
+  });
+}
+
 function NewMealInner() {
   const router = useRouter();
   const params = useSearchParams();
   const { store, tz, preferences, refresh } = useAppData();
   const editId = params.get("entrada");
-  const [tab, setTab] = useState<"busca" | "foto">(
-    params.get("modo") === "foto" ? "foto" : "busca",
-  );
+  const [tab, setTab] = useState<"busca" | "descrever" | "foto">(() => {
+    const m = params.get("modo");
+    return m === "foto" ? "foto" : m === "descrever" ? "descrever" : "busca";
+  });
+  const [description, setDescription] = useState("");
+  const [interpreting, setInterpreting] = useState(false);
   const [when, setWhen] = useState(() => toLocalInput(Date.now(), tz));
   const [meal, setMeal] = useState<Meal>(
     () => (params.get("refeicao") as Meal) || guessMeal(Date.now(), tz),
@@ -109,34 +144,7 @@ function NewMealInner() {
       const json = (await res.json()) as { items?: AnalyzedItem[]; error?: string; note?: string };
       if (!res.ok || !json.items)
         throw new Error(json.error ?? "Não foi possível analisar a foto.");
-      const drafts = json.items.map((it) => {
-        const ref = bestMatch(it.name);
-        if (ref)
-          return {
-            ...draftFromRef(ref, it.grams, it.confidence),
-            name: `${ref.name}`,
-            preparation: it.preparation,
-          };
-        return {
-          key: draftKey(),
-          refId: null,
-          name: it.name,
-          category: null,
-          grams: it.grams,
-          unit: "g" as const,
-          quantity: it.grams,
-          kcal: 0,
-          protein_g: 0,
-          carbs_g: 0,
-          fat_g: 0,
-          fiber_g: null,
-          nutrition_source: "Não encontrado na base — preencha os valores",
-          source_consulted_at: null,
-          confidence: "baixa" as const,
-          edited: false,
-          preparation: it.preparation,
-        };
-      });
+      const drafts = aiItemsToDrafts(json.items);
       setItems((prev) => [...prev, ...drafts]);
       setAnalysisNote(
         json.note ??
@@ -149,6 +157,47 @@ function NewMealInner() {
     } finally {
       setAnalyzing(false);
     }
+  }
+
+  /** Descrição por texto/voz → itens. Usa IA no servidor quando configurada; senão, o interpretador local. */
+  async function interpret() {
+    const text = description.trim();
+    if (text.length < 2) return setError("Escreva ou fale o que você comeu.");
+    setInterpreting(true);
+    setError(null);
+    setAnalysisNote(null);
+    let drafts: DraftItem[] | null = null;
+    if (aiStatus === "disponivel") {
+      try {
+        const res = await apiFetch("/api/interpretar-refeicao", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ texto: text }),
+        });
+        const json = (await res.json()) as { items?: AnalyzedItem[] };
+        if (res.ok && json.items) drafts = aiItemsToDrafts(json.items);
+      } catch {
+        drafts = null;
+      }
+    }
+    if (!drafts) {
+      drafts = parseMealDescription(text).map((p) =>
+        p.food
+          ? { ...draftFromRef(p.food, p.grams, p.confidence), preparation: p.portionLabel }
+          : unmatchedDraft(p.text.trim(), 0, null),
+      );
+    }
+    setInterpreting(false);
+    if (drafts.length === 0)
+      return setError("Não encontrei alimentos nesse texto. Tente separar por vírgulas.");
+    setItems((prev) => [...prev, ...drafts!]);
+    const missing = drafts.filter((d) => !d.refId).length;
+    setAnalysisNote(
+      missing > 0
+        ? `Encontrei ${drafts.length - missing} de ${drafts.length} alimentos. Os marcados como “confiança baixa” e sem valores não estão na base: ajuste o nome, preencha os valores ou remova.`
+        : "Pronto! Confira as porções abaixo antes de salvar — elas são estimadas pela medida que você citou.",
+    );
+    setDescription("");
   }
 
   async function save() {
@@ -247,12 +296,13 @@ function NewMealInner() {
         <div
           role="tablist"
           aria-label="Forma de registro"
-          className="grid grid-cols-2 rounded-button bg-line/60 p-1"
+          className="grid grid-cols-3 rounded-button bg-line/60 p-1"
         >
           {(
             [
-              ["busca", "Buscar alimento", Search],
-              ["foto", "Foto do prato", Camera],
+              ["busca", "Buscar", Search],
+              ["descrever", "Descrever", PenLine],
+              ["foto", "Foto", Camera],
             ] as const
           ).map(([k, label, Icon]) => (
             <button
@@ -268,7 +318,35 @@ function NewMealInner() {
         </div>
       )}
 
-      {tab === "busca" || editId ? (
+      {tab === "descrever" && !editId ? (
+        <Card className="space-y-3">
+          <CardTitle>Conte o que você comeu</CardTitle>
+          <CardHint>
+            Escreva ou fale do seu jeito, com as quantidades se souber. Nós encontramos os alimentos
+            e você confere antes de salvar.
+          </CardHint>
+          <Field label="O que você comeu?" hint={`Exemplo: “${EXAMPLE_DESCRIPTION}”`}>
+            {({ id, describedBy }) => (
+              <Textarea
+                id={id}
+                aria-describedby={describedBy}
+                rows={4}
+                placeholder="Ex.: arroz, feijão, um filé de frango e salada"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            )}
+          </Field>
+          <VoiceInput onText={(t) => setDescription((d) => (d ? `${d}, ${t}` : t))} />
+          <Button
+            block
+            onClick={interpret}
+            disabled={interpreting || description.trim().length < 2}
+          >
+            <WandSparkles /> {interpreting ? "Procurando alimentos…" : "Encontrar alimentos"}
+          </Button>
+        </Card>
+      ) : tab === "busca" || editId ? (
         <Card className="space-y-3">
           <Field label="Buscar na base nutricional">
             {({ id }) => (

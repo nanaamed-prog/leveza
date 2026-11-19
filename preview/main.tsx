@@ -30,8 +30,14 @@ import Reports from "@/app/app/relatorios/page";
 import Profile from "@/app/app/perfil/page";
 import Screening from "@/app/app/perfil/triagem/page";
 import Settings from "@/app/app/configuracoes/page";
+import Bowel from "@/app/app/intestino/page";
 
-const publicRoutes: Record<string, ComponentType> = { "/": Welcome, "/login": Login, "/onboarding": Onboarding, "/privacidade": Privacy };
+const publicRoutes: Record<string, ComponentType> = {
+  "/": Welcome,
+  "/login": Login,
+  "/onboarding": Onboarding,
+  "/privacidade": Privacy,
+};
 const appRoutes: Record<string, ComponentType> = {
   "/app": Dashboard,
   "/app/alimentacao": Food,
@@ -49,6 +55,7 @@ const appRoutes: Record<string, ComponentType> = {
   "/app/perfil": Profile,
   "/app/perfil/triagem": Screening,
   "/app/configuracoes": Settings,
+  "/app/intestino": Bowel,
 };
 
 function Router() {

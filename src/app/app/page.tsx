@@ -3,6 +3,8 @@
 import Link from "next/link";
 import {
   Camera,
+  Mic,
+  Waves,
   Plus,
   Footprints,
   Moon,
@@ -26,6 +28,7 @@ import { formatDateLong, formatDuration, greeting } from "@/lib/dates";
 import { fmt1, fmtInt, todayKey } from "@/lib/utils";
 import { fastingState, formatHms } from "@/lib/calc/fasting";
 import { useNow } from "@/lib/useNow";
+import { describeSince, hoursSinceLast } from "@/lib/calc/bowel";
 
 export default function Dashboard() {
   const { profile, tz, goal, preferences, latestWeight, eligibility } = useAppData();
@@ -34,11 +37,21 @@ export default function Dashboard() {
   const now = useNow(30_000);
   const habits = useRecords("habit_checkins", { eq: { date: today } });
   const fasting = useRecords("fasting_sessions", { limit: 1 });
+  const bowel = useRecords("bowel_entries", { limit: 1 });
+  const bowelSince = hoursSinceLast(
+    bowel.data.map((b) => Date.parse(b.logged_at)),
+    now,
+  );
   const share = macroBreakdown(s.macros).percent;
   const active = eligibility.fasting.allowed ? fasting.data.find((f) => !f.ended_at) : undefined;
 
   const quick = [
     { href: "/app/alimentacao/nova?modo=foto", label: "Fotografar refeição", icon: Camera },
+    {
+      href: "/app/alimentacao/nova?modo=descrever",
+      label: "Falar ou escrever refeição",
+      icon: Mic,
+    },
     { href: "/app/alimentacao/nova", label: "Adicionar alimento", icon: Plus },
     { href: "/app/movimento?novo=1", label: "Registrar atividade", icon: Footprints },
     { href: "/app/sono?novo=1", label: "Registrar sono", icon: Moon },
@@ -193,6 +206,23 @@ export default function Dashboard() {
           href="/app/evolucao"
         />
       </div>
+
+      <Link href="/app/intestino" className="block">
+        <Card className="flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-full bg-[#e1efeb] text-mineral">
+            <Waves className="size-5" aria-hidden />
+          </span>
+          <div>
+            <p className="font-display font-semibold">Meu intestino</p>
+            <p className="text-sm text-muted">
+              {bowel.data.length
+                ? `Último registro: ${describeSince(bowelSince).toLowerCase()}`
+                : "Registre suas idas ao banheiro"}
+            </p>
+          </div>
+          <ChevronRight className="ml-auto size-4 text-muted" aria-hidden />
+        </Card>
+      </Link>
 
       <Link href="/app/habitos" className="block">
         <Card className="flex items-center gap-3">

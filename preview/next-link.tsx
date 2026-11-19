@@ -1,9 +1,16 @@
 import { forwardRef, type AnchorHTMLAttributes } from "react";
 import { navigate } from "./router";
 
-type Props = AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; prefetch?: boolean; replace?: boolean };
+type Props = AnchorHTMLAttributes<HTMLAnchorElement> & {
+  href: string;
+  prefetch?: boolean;
+  replace?: boolean;
+};
 
-const Link = forwardRef<HTMLAnchorElement, Props>(function Link({ href, onClick, prefetch: _p, replace, target: _t, ...rest }, ref) {
+const Link = forwardRef<HTMLAnchorElement, Props>(function Link(
+  { href, onClick, prefetch: _p, replace, target: _t, ...rest },
+  ref,
+) {
   void _p;
   void _t;
   return (

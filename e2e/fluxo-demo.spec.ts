@@ -94,3 +94,31 @@ test("lactante: jejum bloqueado e modo dedicado", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Modo Lactante" })).toBeVisible();
   await page.screenshot({ path: "test-results/06-lactante.png", fullPage: true });
 });
+
+test("descrever refeição por texto encontra os alimentos", async ({ page }) => {
+  await onboard(page);
+  await page.getByRole("link", { name: "Falar ou escrever refeição" }).click();
+  await page
+    .getByLabel("O que você comeu?")
+    .fill("2 ovos, 1 pão francês com manteiga e um copo de leite");
+  await page.getByRole("button", { name: "Encontrar alimentos" }).click();
+  await expect(page.getByText("Pronto! Confira as porções")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Nome do alimento" })).toHaveCount(4);
+  await page.screenshot({ path: "test-results/07-descrever.png", fullPage: true });
+  await page.getByRole("button", { name: "Salvar refeição" }).click();
+  await expect(page.getByText("Pão francês")).toBeVisible();
+});
+
+test("meu intestino: registro rápido e detalhado", async ({ page }) => {
+  await onboard(page);
+  await page.getByRole("link", { name: /Meu intestino/ }).click();
+  await page.getByRole("button", { name: "Fui ao banheiro agora" }).click();
+  await expect(page.getByText("Registrado agora")).toBeVisible();
+  await page.getByRole("button", { name: "Registrar com detalhes" }).click();
+  await page.getByRole("button", { name: /Alongado, liso e macio/ }).click();
+  await expect(page.getByText("Faixa geralmente considerada de referência.")).toBeVisible();
+  await page.getByRole("button", { name: "Salvar", exact: true }).click();
+  await expect(page.getByText("Tipo 4")).toBeVisible();
+  await expect(page.getByText("2×")).toBeVisible();
+  await page.screenshot({ path: "test-results/08-intestino.png", fullPage: true });
+});
