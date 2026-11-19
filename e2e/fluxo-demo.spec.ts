@@ -122,3 +122,17 @@ test("meu intestino: registro rápido e detalhado", async ({ page }) => {
   await expect(page.getByText("2×")).toBeVisible();
   await page.screenshot({ path: "test-results/08-intestino.png", fullPage: true });
 });
+
+test("meia porção e alimentos do dia a dia", async ({ page }) => {
+  await onboard(page);
+  await page.goto("/app/alimentacao/nova");
+  await page.getByLabel("Buscar na base nutricional").fill("pão de forma");
+  await page.getByRole("button", { name: /Pão de forma tradicional/ }).click();
+  await page.getByRole("button", { name: "½", exact: true }).click();
+  await expect(page.getByLabel("Quantidade (g)")).toHaveValue("12.5");
+  await page.getByRole("button", { name: "Adicionar", exact: true }).click();
+  await page.getByRole("button", { name: /Dobrar a porção/ }).click();
+  await expect(page.getByLabel("Porção (g)")).toHaveValue("25");
+  await page.getByRole("button", { name: /Metade da porção/ }).click();
+  await expect(page.getByLabel("Porção (g)")).toHaveValue("12.5");
+});

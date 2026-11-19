@@ -46,8 +46,18 @@ describe("descrição da refeição por texto/voz", () => {
     expect(parseMealDescription("comi duas bananas")[0]!.grams).toBe(140);
   });
 
+  it("alimentos do dia a dia: pão de forma comum, coxinha, refrigerante", () => {
+    expect(ids("2 fatias de pão de forma, 1 coxinha e 1 lata de refrigerante")).toEqual([
+      "pao_forma",
+      "coxinha",
+      "refrigerante",
+    ]);
+    const r = parseMealDescription("2 fatias de pão de forma");
+    expect(r[0]!.grams).toBe(50);
+  });
+
   it("marca como não encontrado o que não está na base", () => {
-    const r = parseMealDescription("1 coxinha");
+    const r = parseMealDescription("1 acarajé");
     expect(r[0]!.food).toBeNull();
   });
 });

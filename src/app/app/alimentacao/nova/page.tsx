@@ -499,8 +499,15 @@ function PortionSheet({
   onClose: () => void;
   onAdd: (d: DraftItem) => void;
 }) {
+  const [base, setBase] = useState(() => food?.portions[0]?.grams ?? 100);
+  const [mult, setMult] = useState(1);
   const [grams, setGrams] = useState(() => String(food?.portions[0]?.grams ?? 100));
   const g = Number(grams.replace(",", "."));
+  const choose = (b: number, m: number) => {
+    setBase(b);
+    setMult(m);
+    setGrams(String(Math.round(b * m * 10) / 10));
+  };
   return (
     <Sheet
       open={Boolean(food)}
@@ -516,10 +523,32 @@ function PortionSheet({
                 key={p.label}
                 variant="secondary"
                 size="sm"
-                onClick={() => setGrams(String(p.grams))}
+                onClick={() => choose(p.grams, mult)}
               >
                 {p.label} ({p.grams} {food.unit})
               </Button>
+            ))}
+          </div>
+          <div
+            role="group"
+            aria-label="Quantas porções"
+            className="grid grid-cols-4 gap-1 rounded-button bg-line/60 p-1"
+          >
+            {[
+              ["½", 0.5],
+              ["1", 1],
+              ["1½", 1.5],
+              ["2", 2],
+            ].map(([label, m]) => (
+              <button
+                key={label}
+                type="button"
+                aria-pressed={mult === m}
+                onClick={() => choose(base, m as number)}
+                className={`min-h-10 rounded-[12px] text-sm font-bold ${mult === m ? "bg-card text-forest shadow-card" : "text-muted"}`}
+              >
+                {label}
+              </button>
             ))}
           </div>
           <Field label={`Quantidade (${food.unit})`}>

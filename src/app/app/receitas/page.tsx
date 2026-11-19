@@ -86,10 +86,12 @@ export default function RecipesPage() {
     refresh();
   }
 
-  async function logPortion(r: Recipe) {
+  async function logPortion(r: Recipe, portions = 1) {
     if (!store) return;
     const t = totals(r.id);
-    const k = 1 / r.servings;
+    const k = portions / r.servings;
+    const label =
+      portions === 0.5 ? "½ porção" : portions === 1 ? "1 porção" : `${portions} porções`;
     const e = await store.insert("food_entries", {
       eaten_at: new Date().toISOString(),
       meal: "almoco",
@@ -100,9 +102,9 @@ export default function RecipesPage() {
     });
     await store.insert("food_items", {
       food_entry_id: e.id,
-      name: `${r.name} (1 porção)`,
+      name: `${r.name} (${label})`,
       category: "preparacoes",
-      quantity: 1,
+      quantity: portions,
       unit: "unidade",
       grams: items.data.filter((i) => i.recipe_id === r.id).reduce((s, i) => s + i.grams, 0) * k,
       kcal: t.kcal * k,
@@ -197,9 +199,14 @@ export default function RecipesPage() {
                   <strong>Substituições:</strong> {r.substitutions}
                 </p>
               )}
-              <Button variant="secondary" size="sm" onClick={() => logPortion(r)}>
-                Registrar 1 porção agora
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-muted">Registrar agora:</span>
+                {[0.5, 1, 2].map((n) => (
+                  <Button key={n} variant="secondary" size="sm" onClick={() => logPortion(r, n)}>
+                    {n === 0.5 ? "½ porção" : n === 1 ? "1 porção" : "2 porções"}
+                  </Button>
+                ))}
+              </div>
             </Card>
           );
         })

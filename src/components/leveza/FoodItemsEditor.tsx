@@ -85,6 +85,28 @@ export function FoodItemsEditor({
                       update(d.key, (x) => rescale(x, g, ref));
                   }}
                 />
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {(
+                    [
+                      ["½ porção", 0.5],
+                      ["× 2", 2],
+                    ] as const
+                  ).map(([label, k]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      aria-label={
+                        k === 0.5 ? `Metade da porção de ${d.name}` : `Dobrar a porção de ${d.name}`
+                      }
+                      onClick={() =>
+                        update(d.key, (x) => rescale(x, Math.round(x.grams * k * 10) / 10, ref))
+                      }
+                      className="min-h-8 rounded-full border border-orange/50 bg-orange-soft px-2 text-[0.7rem] font-semibold text-orange-ink"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 {ref && ref.portions.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1">
                     {ref.portions.map((p) => (

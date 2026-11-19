@@ -32,7 +32,7 @@ Saldo = consumido − gasto estimado até agora. Texto neutro; sem recompensa po
 Valores aproximados inspirados no *Compendium of Physical Activities* (Ainsworth et al., 2011; atualização 2024). Médias populacionais; editáveis pela pessoa.
 
 ## Base nutricional — `src/lib/nutrition/foods.ts`
-48 alimentos comuns no Brasil, por 100 g/ml, com **valores aproximados de referência** montados a partir de valores típicos da TACO (NEPA/UNICAMP, 4ª ed., 2011) e do USDA FoodData Central. Cada item salvo registra `nutrition_source` e `source_consulted_at`.
+98 alimentos comuns no Brasil (incluindo preparações do dia a dia), por 100 g/ml, com **valores aproximados de referência** montados a partir de valores típicos da TACO (NEPA/UNICAMP, 4ª ed., 2011) e do USDA FoodData Central. Cada item salvo registra `nutrition_source` e `source_consulted_at`.
 
 **Antes do lançamento:** importar os valores diretamente das fontes oficiais, respeitando as licenças:
 - **TBCA** (USP/FoRC) — verificar termos de uso para aplicativos.
