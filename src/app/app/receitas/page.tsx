@@ -13,6 +13,9 @@ import { searchFoods, nutrientsFor, type FoodRef } from "@/lib/nutrition/foods";
 import { SEED_CONSULTED_AT } from "@/lib/nutrition/foods";
 import { fmt1, fmtInt } from "@/lib/utils";
 import type { Recipe } from "@/lib/data/types";
+import { usePlan } from "@/lib/data/usePlan";
+import { FREE_RECIPE_LIMIT } from "@/lib/plans";
+import { useRouter } from "next/navigation";
 
 interface Ing {
   ref: FoodRef;
@@ -22,6 +25,10 @@ interface Ing {
 export default function RecipesPage() {
   const { store, refresh } = useAppData();
   const recipes = useRecords("recipes", { limit: 200 });
+  const plan = usePlan();
+  const router = useRouter();
+  const atLimit = !plan.can("receitas_ilimitadas") && recipes.data.length >= FREE_RECIPE_LIMIT;
+  const openNew = () => (atLimit ? router.push("/app/planos") : setOpen(true));
   const items = useRecords("recipe_items", {
     in: { field: "recipe_id", values: recipes.data.map((r) => r.id) },
   });
@@ -56,6 +63,10 @@ export default function RecipesPage() {
     if (!store) return;
     const servings = Math.max(1, Math.round(Number(f.servings) || 1));
     if (!f.name.trim() || ings.length === 0) return setMsg("Dê um nome e adicione ingredientes.");
+    if (atLimit)
+      return setMsg(
+        `O plano Grátis guarda até ${FREE_RECIPE_LIMIT} receitas. Com o Plus, são ilimitadas.`,
+      );
     const r = await store.insert("recipes", {
       name: f.name.trim(),
       servings,
@@ -129,7 +140,7 @@ export default function RecipesPage() {
         title="Receitas"
         back="/app/perfil"
         action={
-          <Button size="icon" aria-label="Nova receita" onClick={() => setOpen(true)}>
+          <Button size="icon" aria-label="Nova receita" onClick={openNew}>
             <Plus />
           </Button>
         }
@@ -144,7 +155,7 @@ export default function RecipesPage() {
           icon={BookOpen}
           title="Nenhuma receita ainda"
           text="Guarde suas preparações para registrar porções com um toque."
-          action={<Button onClick={() => setOpen(true)}>Criar receita</Button>}
+          action={<Button onClick={openNew}>Criar receita</Button>}
         />
       ) : (
         recipes.data.map((r) => {

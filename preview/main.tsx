@@ -31,6 +31,7 @@ import Profile from "@/app/app/perfil/page";
 import Screening from "@/app/app/perfil/triagem/page";
 import Settings from "@/app/app/configuracoes/page";
 import Bowel from "@/app/app/intestino/page";
+import Plans from "@/app/app/planos/page";
 
 const publicRoutes: Record<string, ComponentType> = {
   "/": Welcome,
@@ -56,6 +57,7 @@ const appRoutes: Record<string, ComponentType> = {
   "/app/perfil/triagem": Screening,
   "/app/configuracoes": Settings,
   "/app/intestino": Bowel,
+  "/app/planos": Plans,
 };
 
 function Router() {

@@ -188,3 +188,15 @@ test("lactante: meta não pode ficar abaixo do gasto estimado", async ({ page })
   await page.getByRole("button", { name: "Salvar meta" }).click();
   await expect(page.getByText(/não pode ficar abaixo do gasto estimado/)).toBeVisible();
 });
+
+test("tela de assinatura mostra os três planos", async ({ page }) => {
+  await onboard(page);
+  await page.goto("/app/planos");
+  await expect(page.getByRole("heading", { name: "Assinatura" })).toBeVisible();
+  await expect(page.getByText("Leveza Grátis")).toBeVisible();
+  await expect(page.getByText("R$ 149,90")).toBeVisible();
+  await page.getByRole("radio", { name: "Mensal (cartão)" }).click();
+  await expect(page.getByText("R$ 19,90")).toBeVisible();
+  await expect(page.getByText("R$ 34,90")).toBeVisible();
+  await page.screenshot({ path: "test-results/10-planos.png", fullPage: true });
+});

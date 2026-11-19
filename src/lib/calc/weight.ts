@@ -130,7 +130,10 @@ export interface CumulativeEstimate {
 }
 
 /** Soma o saldo (consumido − gasto) dos dias completos. Exclui o dia em andamento e dias sem refeição. */
-export function cumulativeBalanceEstimate(rows: { date: string; balance: number | null }[], today: string): CumulativeEstimate {
+export function cumulativeBalanceEstimate(
+  rows: { date: string; balance: number | null }[],
+  today: string,
+): CumulativeEstimate {
   const valid = rows.filter((r) => r.balance !== null && r.date < today);
   const total = valid.reduce((s, r) => s + (r.balance as number), 0);
   return {
@@ -147,7 +150,11 @@ export function cumulativeBalanceEstimate(rows: { date: string; balance: number 
  * - Perfil sem déficit (gestação, amamentação, menores, contraindicações): a meta não pode ficar
  *   abaixo do gasto estimado do dia — ou seja, não vira meta restritiva.
  */
-export function kcalTargetFloor(p: { deficitAllowed: boolean; bmrLow: number | null; projectedExpenditure: number | null }): number {
+export function kcalTargetFloor(p: {
+  deficitAllowed: boolean;
+  bmrLow: number | null;
+  projectedExpenditure: number | null;
+}): number {
   if (p.deficitAllowed) return Math.max(1200, Math.round(p.bmrLow ?? 0));
   return Math.max(1200, Math.round((p.projectedExpenditure ?? 0) / 10) * 10);
 }

@@ -10,6 +10,7 @@ import { ConfirmationDialog, Sheet } from "@/components/ui/dialog";
 import { WeightForm } from "@/components/leveza/WeightForm";
 import { EmptyState } from "@/components/leveza/EmptyState";
 import { BalanceEstimateCard } from "@/components/leveza/BalanceEstimateCard";
+import { PlusGate } from "@/components/leveza/PlusGate";
 import { useDailyReport } from "@/lib/data/useDailyReport";
 import { PeriodFilter, SimpleLineChart, CHART } from "@/components/leveza/charts";
 import { useAppData, useRecords } from "@/lib/data/provider";
@@ -79,7 +80,13 @@ export default function EvolutionPage() {
       />
       <PeriodFilter value={period} onChange={setPeriod} />
 
-      <BalanceEstimateCard rows={report.rows} today={report.today} days={period} />
+      <PlusGate
+        feature="saldo_acumulado"
+        title="Saldo acumulado e peso estimado"
+        text="Veja o déficit da semana e do mês e quanto ele representa em peso (7.700 kcal ≈ 1 kg). Disponível no Leveza Plus."
+      >
+        <BalanceEstimateCard rows={report.rows} today={report.today} days={period} />
+      </PlusGate>
 
       {points.length === 0 ? (
         <EmptyState

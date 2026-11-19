@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { PeriodFilter, SimpleBarChart, SimpleLineChart, CHART } from "@/components/leveza/charts";
 import { MacroRing } from "@/components/leveza/MacroRing";
 import { BalanceEstimateCard } from "@/components/leveza/BalanceEstimateCard";
+import { PlusGate } from "@/components/leveza/PlusGate";
+import { usePlan } from "@/lib/data/usePlan";
+import { useRouter } from "next/navigation";
 import { useAppData, useRecords } from "@/lib/data/provider";
 import { usePersonalBasics } from "@/lib/data/useDaySummary";
 import { addDays, dayRange, formatDateShort } from "@/lib/dates";
@@ -25,6 +28,9 @@ export default function ReportsPage() {
   const basics = usePersonalBasics();
   const today = todayKey(tz);
   const [days, setDays] = useState(7);
+  const plan = usePlan();
+  const router = useRouter();
+  const longOk = plan.can("relatorios_longos");
   const from = new Date(dayRange(addDays(today, -days + 1), tz).start).toISOString();
   const fromWide = new Date(dayRange(addDays(today, -days), tz).start).toISOString();
   const to = new Date(dayRange(today, tz).end).toISOString();
@@ -156,12 +162,21 @@ export default function ReportsPage() {
         title="Relatórios"
         back="/app/perfil"
         action={
-          <Button variant="outline" size="sm" onClick={exportCsv} disabled={!hasAny}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => (plan.can("exportacao") ? exportCsv() : router.push("/app/planos"))}
+            disabled={!hasAny}
+          >
             <Download /> CSV
           </Button>
         }
       />
-      <PeriodFilter value={days} onChange={setDays} />
+      <PeriodFilter
+        value={days}
+        onChange={(d) => (d > 7 && !longOk ? router.push("/app/planos") : setDays(d))}
+        lockedAbove={longOk ? undefined : 7}
+      />
       <p className="text-xs text-muted">
         Consumo e água: informados por você · Peso: medido · Gasto e saldo: estimados.
       </p>
@@ -207,7 +222,13 @@ export default function ReportsPage() {
         )}
       </Card>
 
-      <BalanceEstimateCard rows={rows} today={today} days={days} />
+      <PlusGate
+        feature="saldo_acumulado"
+        title="Saldo acumulado e peso estimado"
+        text="Disponível no Leveza Plus."
+      >
+        <BalanceEstimateCard rows={rows} today={today} days={days} />
+      </PlusGate>
 
       <Card>
         <CardTitle className="mb-3">Distribuição de macros no período</CardTitle>

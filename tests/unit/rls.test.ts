@@ -237,3 +237,37 @@ describe("Storage de fotos", () => {
     ).rejects.toThrow(/row-level security/);
   });
 });
+
+describe("Assinaturas — ninguém se dá um plano pelo app", () => {
+  it("usuário não insere nem altera a própria assinatura", async () => {
+    await expect(
+      as(
+        A,
+        `insert into public.subscriptions (user_id, plan, status, current_period_end) values ('${A}', 'plus_ia', 'active', now() + interval '1 year')`,
+      ),
+    ).rejects.toThrow(/permission denied|row-level security/);
+  });
+
+  it("teste grátis de 7 dias funciona uma única vez", async () => {
+    const r = await as(A, "select plan, status from public.start_trial()");
+    expect(r.rows[0]).toMatchObject({ plan: "plus", status: "trial" });
+    await expect(as(A, "select * from public.start_trial()")).rejects.toThrow(/trial_unavailable/);
+    const upd = await as(
+      A,
+      "update public.subscriptions set plan = 'plus_ia' returning user_id",
+    ).catch((e: Error) => e);
+    expect(upd instanceof Error ? upd.message : "").toMatch(/permission denied/);
+  });
+
+  it("B não vê a assinatura de A", async () => {
+    expect((await as(B, "select * from public.subscriptions")).rows).toHaveLength(0);
+  });
+
+  it("uso de IA: cada um registra e vê só o próprio", async () => {
+    await as(A, `insert into public.ai_usage (user_id, kind) values ('${A}', 'foto')`);
+    await expect(
+      as(B, `insert into public.ai_usage (user_id, kind) values ('${A}', 'foto')`),
+    ).rejects.toThrow(/row-level security/);
+    expect((await as(B, "select * from public.ai_usage")).rows).toHaveLength(0);
+  });
+});

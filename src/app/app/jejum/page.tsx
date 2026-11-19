@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/form";
 import { ConfirmationDialog } from "@/components/ui/dialog";
 import { EligibilityNotice } from "@/components/leveza/EligibilityNotice";
 import { FastingTimer } from "@/components/leveza/FastingTimer";
+import { PlusGate } from "@/components/leveza/PlusGate";
 import { useAppData, useRecords } from "@/lib/data/provider";
 import { canStartFasting, FASTING_PROTOCOLS, type FastingProtocol } from "@/lib/calc/eligibility";
 import {
@@ -226,26 +227,32 @@ export default function FastingPage() {
 
       <Education />
 
-      {sessions.data.filter((s) => s.ended_at).length > 0 && (
-        <Card>
-          <CardTitle className="mb-2">Histórico</CardTitle>
-          <ul className="divide-y divide-line text-sm">
-            {sessions.data
-              .filter((s) => s.ended_at)
-              .map((s) => (
-                <li key={s.id} className="flex justify-between py-2">
-                  <span>
-                    {formatDateShort(localDateKey(Date.parse(s.started_at), tz))} · plano{" "}
-                    {s.protocol_hours} h
-                  </span>
-                  <span className="tabular text-muted">
-                    {formatHms(Date.parse(s.ended_at!) - Date.parse(s.started_at))}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        </Card>
-      )}
+      <PlusGate
+        feature="jejum_historico"
+        title="Histórico de jejuns"
+        text="Veja todos os seus jejuns anteriores no Leveza Plus. O cronômetro continua grátis."
+      >
+        {sessions.data.filter((s) => s.ended_at).length > 0 && (
+          <Card>
+            <CardTitle className="mb-2">Histórico</CardTitle>
+            <ul className="divide-y divide-line text-sm">
+              {sessions.data
+                .filter((s) => s.ended_at)
+                .map((s) => (
+                  <li key={s.id} className="flex justify-between py-2">
+                    <span>
+                      {formatDateShort(localDateKey(Date.parse(s.started_at), tz))} · plano{" "}
+                      {s.protocol_hours} h
+                    </span>
+                    <span className="tabular text-muted">
+                      {formatHms(Date.parse(s.ended_at!) - Date.parse(s.started_at))}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </Card>
+        )}
+      </PlusGate>
 
       <ConfirmationDialog
         open={confirmEnd}

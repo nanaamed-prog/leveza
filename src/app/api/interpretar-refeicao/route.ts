@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser, rateLimit } from "@/lib/server/auth";
+import { checkFeature } from "@/lib/server/entitlements";
 import { analyzeMealText, visionConfigured } from "@/lib/server/vision";
 
 export const runtime = "nodejs";
@@ -14,6 +15,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "IA não configurada." }, { status: 503 });
   const auth = await requireUser(req);
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const ent = await checkFeature(auth.token, auth.userId, "ia_texto", "texto");
+  if (!ent.ok) return NextResponse.json({ error: ent.error }, { status: ent.status });
   if (!rateLimit(`text:${auth.userId}`, 20, 60_000)) {
     return NextResponse.json({ error: "Muitas solicitações. Aguarde um minuto." }, { status: 429 });
   }

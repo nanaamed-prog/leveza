@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser, rateLimit } from "@/lib/server/auth";
+import { checkFeature } from "@/lib/server/entitlements";
 import { analyzeMealImage, sniffImageType, visionConfigured } from "@/lib/server/vision";
 
 export const runtime = "nodejs";
@@ -22,6 +23,8 @@ export async function POST(req: Request) {
   }
   const auth = await requireUser(req);
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const ent = await checkFeature(auth.token, auth.userId, "ia_foto", "foto");
+  if (!ent.ok) return NextResponse.json({ error: ent.error }, { status: ent.status });
   if (!rateLimit(`vision:${auth.userId}`, 10, 60_000)) {
     return NextResponse.json(
       { error: "Muitas análises em pouco tempo. Aguarde um minuto." },

@@ -142,9 +142,12 @@ export function SimpleLineChart({
 export function PeriodFilter({
   value,
   onChange,
+  lockedAbove,
 }: {
   value: number;
   onChange: (d: number) => void;
+  /** Períodos acima deste valor aparecem com cadeado (recurso do plano Plus). */
+  lockedAbove?: number;
 }) {
   return (
     <div role="radiogroup" aria-label="Período" className="flex gap-1 rounded-full bg-line/60 p-1">
@@ -156,7 +159,7 @@ export function PeriodFilter({
           onClick={() => onChange(d)}
           className={`min-h-9 flex-1 rounded-full px-3 text-xs font-semibold ${value === d ? "bg-card text-forest shadow-card" : "text-muted"}`}
         >
-          {d} dias
+          {d} dias{lockedAbove !== undefined && d > lockedAbove ? " 🔒" : ""}
         </button>
       ))}
     </div>

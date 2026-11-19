@@ -4,12 +4,14 @@ import { createClient } from "@supabase/supabase-js";
 /** Valida o token Bearer enviado pelo cliente e retorna o id do usuário. */
 export async function requireUser(
   req: Request,
-): Promise<{ userId: string } | { error: string; status: number }> {
+): Promise<
+  { userId: string; email: string | null; token: string | null } | { error: string; status: number }
+> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon) {
     // Sem Supabase: só permite se explicitamente liberado para testes locais.
-    if (process.env.ALLOW_DEMO_AI === "true") return { userId: "demo" };
+    if (process.env.ALLOW_DEMO_AI === "true") return { userId: "demo", email: null, token: null };
     return {
       error: "Conta não configurada. Configure o Supabase para usar esta função.",
       status: 503,
@@ -21,7 +23,7 @@ export async function requireUser(
   const sb = createClient(url, anon, { auth: { persistSession: false } });
   const { data, error } = await sb.auth.getUser(token);
   if (error || !data.user) return { error: "Sessão inválida. Entre novamente.", status: 401 };
-  return { userId: data.user.id };
+  return { userId: data.user.id, email: data.user.email ?? null, token };
 }
 
 const hits = new Map<string, number[]>();

@@ -21,6 +21,8 @@ import { fmtInt } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
 import { getSupabase } from "@/lib/supabase/client";
 import { LoadingSkeleton } from "@/components/leveza/LoadingSkeleton";
+import { PlusGate } from "@/components/leveza/PlusGate";
+import { usePlan } from "@/lib/data/usePlan";
 
 function guessMeal(ms: number, tz: string): Meal {
   const h = Number(
@@ -76,6 +78,7 @@ function NewMealInner() {
   const router = useRouter();
   const params = useSearchParams();
   const { store, tz, preferences, refresh } = useAppData();
+  const plan = usePlan();
   const editId = params.get("entrada");
   const [tab, setTab] = useState<"busca" | "descrever" | "foto">(() => {
     const m = params.get("modo");
@@ -167,7 +170,7 @@ function NewMealInner() {
     setError(null);
     setAnalysisNote(null);
     let drafts: DraftItem[] | null = null;
-    if (aiStatus === "disponivel") {
+    if (aiStatus === "disponivel" && plan.can("ia_texto")) {
       try {
         const res = await apiFetch("/api/interpretar-refeicao", {
           method: "POST",
@@ -388,32 +391,38 @@ function NewMealInner() {
           </Button>
         </Card>
       ) : (
-        <Card className="space-y-3">
-          <CardTitle>Foto do prato</CardTitle>
-          {aiStatus === "indisponivel" ? (
-            <CardHint>
-              A análise por foto não está configurada neste ambiente (é preciso uma chave de IA no
-              servidor). O registro manual continua funcionando normalmente.
-            </CardHint>
-          ) : (
-            <CardHint>
-              A IA sugere alimentos e porções aproximadas. Você revisa tudo antes de salvar.
-            </CardHint>
-          )}
-          <FoodPhotoCapture onReady={(b) => setPhoto(b)} disabled={aiStatus !== "disponivel"} />
-          <Button
-            block
-            onClick={analyze}
-            disabled={!photo || analyzing || aiStatus !== "disponivel"}
-          >
-            <Sparkles /> {analyzing ? "Analisando…" : "Analisar foto"}
-          </Button>
-          {aiStatus === "indisponivel" && (
-            <Button variant="secondary" block onClick={() => setTab("busca")}>
-              Registrar manualmente
+        <PlusGate
+          feature="ia_foto"
+          title="Foto do prato com IA"
+          text="Tire uma foto e a IA sugere os alimentos e as porções para você revisar. Disponível no Leveza Plus IA. A busca e o “Descrever” continuam grátis."
+        >
+          <Card className="space-y-3">
+            <CardTitle>Foto do prato</CardTitle>
+            {aiStatus === "indisponivel" ? (
+              <CardHint>
+                A análise por foto não está configurada neste ambiente (é preciso uma chave de IA no
+                servidor). O registro manual continua funcionando normalmente.
+              </CardHint>
+            ) : (
+              <CardHint>
+                A IA sugere alimentos e porções aproximadas. Você revisa tudo antes de salvar.
+              </CardHint>
+            )}
+            <FoodPhotoCapture onReady={(b) => setPhoto(b)} disabled={aiStatus !== "disponivel"} />
+            <Button
+              block
+              onClick={analyze}
+              disabled={!photo || analyzing || aiStatus !== "disponivel"}
+            >
+              <Sparkles /> {analyzing ? "Analisando…" : "Analisar foto"}
             </Button>
-          )}
-        </Card>
+            {aiStatus === "indisponivel" && (
+              <Button variant="secondary" block onClick={() => setTab("busca")}>
+                Registrar manualmente
+              </Button>
+            )}
+          </Card>
+        </PlusGate>
       )}
 
       {analysisNote && (

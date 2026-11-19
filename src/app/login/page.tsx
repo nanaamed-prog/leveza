@@ -54,7 +54,10 @@ export default function LoginPage() {
           text: "Não foi possível criar a conta. Tente outro e-mail ou mais tarde.",
         });
       else if (!data.session)
-        setMsg({ tone: "ok", text: "Enviamos um link de confirmação para o seu e-mail. Depois de confirmar, volte aqui e toque em Entrar." });
+        setMsg({
+          tone: "ok",
+          text: "Enviamos um link de confirmação para o seu e-mail. Depois de confirmar, volte aqui e toque em Entrar.",
+        });
     }
   }
 

@@ -16,6 +16,7 @@ import {
   Moon,
   Droplets,
   Waves,
+  Sparkles,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -80,6 +81,7 @@ export default function ProfilePage() {
 
   const links = [
     { href: "/app/plano", label: "Meu plano e objetivos", icon: Target },
+    { href: "/app/planos", label: "Assinatura (Grátis, Plus, Plus IA)", icon: Sparkles },
     { href: "/app/perfil/triagem", label: "Triagem de saúde", icon: ShieldCheck },
     eligibility.mode === "lactante"
       ? { href: "/app/lactante", label: "Modo Lactante", icon: Baby }
