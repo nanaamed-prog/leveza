@@ -59,7 +59,9 @@ export function VoiceInput({ onText }: { onText: (text: string) => void }) {
         stream.getTracks().forEach((t) => t.stop());
       }
     } catch {
-      setError("O microfone está bloqueado para o Leveza. Toque no cadeado ao lado do endereço (ou em Configurações do app) e permita o microfone.");
+      setError(
+        "O microfone está bloqueado para o Leveza. Toque no cadeado ao lado do endereço (ou em Configurações do app) e permita o microfone.",
+      );
       return;
     }
     try {
@@ -80,9 +82,9 @@ export function VoiceInput({ onText }: { onText: (text: string) => void }) {
             ? "O microfone não foi liberado. Permita o microfone para o Leveza nas configurações do navegador e tente de novo."
             : e.error === "network"
               ? "O reconhecimento de voz precisa de internet. Confira a conexão e tente de novo."
-            : e.error === "no-speech"
-              ? "Não ouvi nada. Tente de novo, falando perto do celular."
-              : "O ditado não funcionou agora. Use o microfone do teclado.",
+              : e.error === "no-speech"
+                ? "Não ouvi nada. Tente de novo, falando perto do celular."
+                : "O ditado não funcionou agora. Use o microfone do teclado.",
         );
       r.onend = () => setListening(false);
       rec.current = r;
@@ -107,13 +109,19 @@ export function VoiceInput({ onText }: { onText: (text: string) => void }) {
           <Square /> Parar de ouvir
         </Button>
       ) : (
-        <Button variant="secondary" block onClick={() => void start()} disabled={supported === null}>
+        <Button
+          variant="secondary"
+          block
+          onClick={() => void start()}
+          disabled={supported === null}
+        >
           <Mic /> Falar o que comi
         </Button>
       )}
       {listening && (
         <p role="status" className="text-center text-xs font-semibold text-orange-ink">
-          Ouvindo… fale os alimentos e as quantidades. Quando parar de falar, o texto aparece acima. Toque de novo para acrescentar mais.
+          Ouvindo… fale os alimentos e as quantidades. Quando parar de falar, o texto aparece acima.
+          Toque de novo para acrescentar mais.
         </p>
       )}
       {error && (

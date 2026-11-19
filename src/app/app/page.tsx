@@ -8,7 +8,10 @@ import {
   Plus,
   Footprints,
   Moon,
+  MoonStar,
+  Droplet,
   Droplets,
+  PersonStanding,
   Scale,
   ListChecks,
   Timer,
@@ -147,7 +150,7 @@ export default function Dashboard() {
       <Card>
         <div className="mb-3 flex items-center justify-between">
           <CardTitle>Macronutrientes do dia</CardTitle>
-          <Link href="/app/alimentacao" className="text-sm font-semibold text-forest">
+          <Link href="/app/alimentacao" className="text-xs font-semibold text-forest">
             Ver refeições
           </Link>
         </div>
@@ -156,7 +159,7 @@ export default function Dashboard() {
             Nenhuma refeição registrada hoje. Que tal registrar a próxima?
           </p>
         ) : (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3">
             {(
               [
                 ["Proteínas", s.macros.proteinG, share?.protein, MACRO_COLORS.protein],
@@ -164,10 +167,15 @@ export default function Dashboard() {
                 ["Gorduras", s.macros.fatG, share?.fat, MACRO_COLORS.fat],
               ] as const
             ).map(([label, g, pct, color]) => (
-              <div key={label}>
-                <p className="text-xs font-semibold text-muted">{label}</p>
+              <div
+                key={label}
+                className="border-line px-1 text-center [&:not(:first-child)]:border-l"
+              >
+                <p className="text-xs font-semibold text-ink">{label}</p>
                 <p className="tabular font-display text-xl font-bold text-ink">{fmtInt(g)} g</p>
-                <p className="tabular text-xs text-muted">{Math.round(pct ?? 0)}% da energia</p>
+                <p className="tabular text-xs text-muted" title="Participação na energia do dia">
+                  ({Math.round(pct ?? 0)}%)
+                </p>
                 <div
                   className="mt-1.5 h-2 overflow-hidden rounded-full bg-line"
                   role="presentation"
@@ -188,24 +196,24 @@ export default function Dashboard() {
           [
             [
               "/app/movimento",
-              Footprints,
+              PersonStanding,
               "Movimento",
               s.activityMinutes > 0 ? formatDuration(s.activityMinutes) : "—",
               "text-forest",
             ],
             [
               "/app/sono",
-              Moon,
+              MoonStar,
               "Sono",
               s.sleepMinutes !== null ? formatDuration(s.sleepMinutes) : "—",
               "text-forest",
             ],
             [
               "/app/agua",
-              Droplets,
+              Droplet,
               "Água",
               s.waterMl > 0 ? `${fmt1(s.waterMl / 1000)} L` : "—",
-              "text-mineral",
+              "text-forest",
             ],
           ] as const
         ).map(([href, Icon, label, value, tone]) => (
@@ -214,9 +222,9 @@ export default function Dashboard() {
             href={href}
             className="flex flex-col items-center rounded-card border border-line bg-card px-2 py-3 text-center shadow-card"
           >
-            <Icon className={`size-6 ${tone}`} aria-hidden />
-            <span className="mt-1 text-xs font-semibold text-muted">{label}</span>
-            <span className="tabular font-display text-base font-bold text-ink">{value}</span>
+            <Icon className={`size-7 ${tone}`} strokeWidth={2.2} aria-hidden />
+            <span className="mt-1 text-sm font-semibold text-ink">{label}</span>
+            <span className="tabular font-display text-lg font-bold text-ink">{value}</span>
           </Link>
         ))}
       </div>
@@ -224,9 +232,7 @@ export default function Dashboard() {
       <Link href="/app/evolucao" className="block">
         <Card>
           <div className="mb-2 flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-sage-soft text-forest">
-              <Scale className="size-4" aria-hidden />
-            </span>
+            <Scale className="size-5 text-forest" aria-hidden />
             <CardTitle>Seu progresso</CardTitle>
             <ChevronRight className="ml-auto size-4 text-muted" aria-hidden />
           </div>
@@ -240,14 +246,14 @@ export default function Dashboard() {
                   </p>
                 </div>
                 {firstWeight && Math.abs(latestWeight.weight_kg - firstWeight) >= 0.1 && (
-                  <span className="tabular rounded-full bg-sage-soft px-2.5 py-1 text-xs font-bold text-forest">
-                    {latestWeight.weight_kg < firstWeight ? "↓" : "↑"}{" "}
+                  <span className="tabular rounded-full bg-sage-soft px-3 py-1 text-xs font-bold text-forest">
+                    {latestWeight.weight_kg < firstWeight ? "↓ −" : "↑ +"}
                     {fmt1(Math.abs(latestWeight.weight_kg - firstWeight))} kg
                   </span>
                 )}
                 {goal?.target_weight_kg ? (
                   <div className="text-right">
-                    <p className="text-xs text-muted">Peso desejado</p>
+                    <p className="text-xs text-muted">Meta</p>
                     <p className="tabular font-display text-xl font-bold">
                       {fmt1(goal.target_weight_kg)} kg
                     </p>
@@ -276,33 +282,18 @@ export default function Dashboard() {
 
       <Link
         href="/app/alimentacao/nova"
-        className="flex min-h-16 items-center gap-3 rounded-card bg-forest px-4 py-3 text-white shadow-card hover:bg-forest-hover"
+        className="flex min-h-16 items-center gap-4 rounded-full bg-forest px-6 py-3 text-white shadow-card hover:bg-forest-hover"
       >
-        <span className="flex size-11 items-center justify-center rounded-xl bg-white/15">
-          <Camera className="size-6" aria-hidden />
-        </span>
+        <Camera className="size-8 shrink-0" strokeWidth={1.8} aria-hidden />
         <span>
-          <span className="block font-display text-base font-bold">Registrar refeição</span>
-          <span className="block text-xs text-sage">Por foto, voz, texto ou busca</span>
+          <span className="block font-display text-lg font-bold leading-tight">
+            Registrar refeição
+          </span>
+          <span className="block text-xs text-white/85">
+            Fotografe, fale ou busque seu prato e veja as calorias.
+          </span>
         </span>
-        <ChevronRight className="ml-auto size-5" aria-hidden />
       </Link>
-
-      <nav aria-label="Ações rápidas" className="-mx-4 overflow-x-auto px-4">
-        <ul className="flex gap-2 pb-1">
-          {quick.map(({ href, label, icon: Icon }) => (
-            <li key={href}>
-              <Link
-                href={href}
-                className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full border border-line bg-card px-4 text-sm font-semibold text-forest shadow-card hover:border-sage"
-              >
-                <Icon className="size-4 text-orange-ink" aria-hidden />
-                {label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
 
       {active && (
         <Link href="/app/jejum" className="block">
@@ -358,6 +349,23 @@ export default function Dashboard() {
           <ChevronRight className="ml-auto size-4 text-muted" aria-hidden />
         </Card>
       </Link>
+
+      <h2 className="px-1 pt-1 font-display text-sm font-bold text-ink">Atalhos</h2>
+      <nav aria-label="Ações rápidas" className="-mx-4 -mt-2 overflow-x-auto px-4">
+        <ul className="flex gap-2 pb-1">
+          {quick.map(({ href, label, icon: Icon }) => (
+            <li key={href}>
+              <Link
+                href={href}
+                className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full border border-line bg-card px-4 text-sm font-semibold text-forest shadow-card hover:border-sage"
+              >
+                <Icon className="size-4 text-orange-ink" aria-hidden />
+                {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <nav aria-label="Mais" className="grid grid-cols-2 gap-2 text-sm">
         {[

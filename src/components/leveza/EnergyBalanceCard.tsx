@@ -13,29 +13,26 @@ function Row({
   label,
   value,
   tone = "forest",
-  sub,
 }: {
   icon: typeof Flame;
   label: string;
   value: string;
   tone?: "forest" | "orange";
-  sub?: string;
 }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <span
-        className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${tone === "orange" ? "bg-orange-soft text-orange-ink" : "bg-sage-soft text-forest"}`}
-      >
-        <Icon className="size-[18px]" aria-hidden />
-      </span>
+    <div className="flex items-center gap-3 py-2 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-line">
+      <Icon
+        className={`size-6 shrink-0 ${tone === "orange" ? "text-orange" : "text-forest"}`}
+        strokeWidth={2.2}
+        aria-hidden
+      />
       <div className="min-w-0">
-        <p className="text-xs text-muted">{label}</p>
+        <p className="text-xs text-ink/80">{label}</p>
         <p
           className={`tabular font-display text-lg font-bold leading-tight ${tone === "orange" ? "text-orange-ink" : "text-ink"}`}
         >
           {value}
         </p>
-        {sub && <p className="tabular text-[0.68rem] text-muted">{sub}</p>}
       </div>
     </div>
   );
@@ -67,54 +64,63 @@ export function EnergyBalanceCard({
   return (
     <Card className="p-4">
       <div className="flex items-start justify-between">
-        <h2 className="font-display text-base font-semibold">Seu balanço energético</h2>
+        <h2 className="font-display text-base font-bold">Seu balanço energético</h2>
         <button
           type="button"
           onClick={() => setInfo(true)}
-          className="-mr-2 -mt-2 flex size-11 items-center justify-center rounded-full text-muted hover:bg-sage-soft"
+          className="-mr-3 -mt-3 flex size-11 items-center justify-center rounded-full text-muted/70 hover:bg-sage-soft"
           aria-label="Como calculamos"
         >
-          <Info className="size-5" />
+          <Info className="size-4" />
         </button>
       </div>
-      <div className="mt-2 flex items-center gap-4">
-        <ProgressRing
-          value={kcalTarget ? consumed / kcalTarget : null}
-          size={124}
-          stroke={12}
-          color="var(--brand-forest)"
-          track="var(--brand-sage-soft)"
-          label="Consumo em relação à meta"
-        >
-          {pct !== null ? (
-            <>
-              <span className="tabular font-display text-3xl font-bold text-ink">{pct}%</span>
-              <span className="text-xs text-muted">da meta</span>
-            </>
-          ) : (
-            <>
-              <span className="tabular font-display text-2xl font-bold text-ink">
-                {fmtInt(consumed)}
-              </span>
-              <span className="text-xs text-muted">kcal hoje</span>
-            </>
+      <div className="mt-1 flex items-center gap-4">
+        <div className="flex shrink-0 flex-col items-center gap-1">
+          <ProgressRing
+            value={kcalTarget ? consumed / kcalTarget : null}
+            size={124}
+            stroke={12}
+            color="var(--brand-forest)"
+            track="var(--brand-sage-soft)"
+            label="Consumo em relação à meta"
+          >
+            {pct !== null ? (
+              <>
+                <span className="tabular font-display text-3xl font-bold text-ink">{pct}%</span>
+                <span className="text-xs text-muted">da meta</span>
+              </>
+            ) : (
+              <>
+                <span className="tabular font-display text-2xl font-bold text-ink">
+                  {fmtInt(consumed)}
+                </span>
+                <span className="text-xs text-muted">kcal hoje</span>
+              </>
+            )}
+          </ProgressRing>
+          {onEditGoal && (
+            <button
+              type="button"
+              onClick={onEditGoal}
+              aria-label={
+                kcalTarget
+                  ? `Editar meta diária (${fmtInt(kcalTarget)} kcal)`
+                  : "Definir meta diária de calorias"
+              }
+              className="tabular flex min-h-9 items-center gap-1 rounded-full px-3 text-xs font-semibold text-forest hover:bg-sage-soft"
+            >
+              <Pencil className="size-3.5" aria-hidden />
+              {kcalTarget ? `Meta ${fmtInt(kcalTarget)} kcal` : "Definir meta"}
+            </button>
           )}
-        </ProgressRing>
-        <div className="flex-1 space-y-2.5">
-          <Row
-            icon={Utensils}
-            label="Consumidas"
-            value={`${fmtInt(consumed)} kcal`}
-            sub={kcalTarget ? `meta ${fmtInt(kcalTarget)} kcal` : undefined}
-          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <Row icon={Utensils} label="Consumidas" value={`${fmtInt(consumed)} kcal`} />
           <Row
             icon={Flame}
             tone="orange"
-            label={isToday ? "Gasto estimado até agora" : "Gasto estimado"}
+            label="Gasto estimado"
             value={spent !== null ? `${fmtInt(spent)} kcal` : "—"}
-            sub={
-              energy && isToday ? `projeção 24 h: ${fmtInt(energy.projected24h.kcal)}` : undefined
-            }
           />
           <Row
             icon={CalendarCheck}
@@ -124,26 +130,18 @@ export function EnergyBalanceCard({
           />
         </div>
       </div>
-      <p className="mt-3 rounded-xl bg-canvas px-3 py-2 text-xs text-muted">
-        {energyMissing ??
-          (balance !== null
-            ? `${describeBalance(balance)}.${isRange && energy ? ` Projeção em faixa: ${fmtInt(energy.projected24h.low)}–${fmtInt(energy.projected24h.high)} kcal.` : ""} Saldo é informação, não pontuação.`
-            : "")}
-      </p>
-      {onEditGoal && (
-        <button
-          type="button"
-          onClick={onEditGoal}
-          className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-button text-sm font-semibold text-forest hover:bg-sage-soft"
-        >
-          <Pencil className="size-4" aria-hidden />
-          {kcalTarget
-            ? `Editar meta diária (${fmtInt(kcalTarget)} kcal)`
-            : "Definir meta diária de calorias"}
-        </button>
-      )}
+      {energyMissing && <p className="mt-2 text-xs text-muted">{energyMissing}</p>}
       <Sheet open={info} onOpenChange={setInfo} title="Como estimamos o gasto">
         <div className="space-y-3 text-sm text-ink">
+          {balance !== null && (
+            <p className="rounded-xl bg-canvas px-3 py-2">
+              <strong>Hoje:</strong> {describeBalance(balance)}.
+              {isToday && energy
+                ? ` O gasto mostrado é o estimado até agora; a projeção para 24 h é de ${isRange ? `${fmtInt(energy.projected24h.low)}–${fmtInt(energy.projected24h.high)}` : fmtInt(energy.projected24h.kcal)} kcal.`
+                : ""}{" "}
+              Saldo é informação, não pontuação.
+            </p>
+          )}
           <p>
             Dividimos o seu dia em períodos que <strong>não se sobrepõem</strong>: sono registrado,
             atividades registradas e o restante do tempo acordado (de acordo com seu nível habitual

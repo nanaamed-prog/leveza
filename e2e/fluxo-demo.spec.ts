@@ -54,13 +54,13 @@ test("onboarding, registros e dashboard real", async ({ page }) => {
   await page.screenshot({ path: "test-results/02-nova-refeicao.png", fullPage: true });
   await page.getByRole("button", { name: "Salvar refeição" }).click();
   await expect(page.getByRole("heading", { name: "Alimentação" })).toBeVisible();
-  await expect(page.getByText("Arroz branco cozido")).toBeVisible();
+  await expect(page.getByText("Arroz branco cozido").first()).toBeVisible();
   await page.screenshot({ path: "test-results/03-alimentacao.png", fullPage: true });
 
   // Dashboard reflete
   await page.getByRole("link", { name: "Início" }).click();
   await expect(page.getByText("Consumidas", { exact: true })).toBeVisible();
-  await expect(page.getByText("Gasto estimado até agora")).toBeVisible();
+  await expect(page.getByText("Gasto estimado", { exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/04-dashboard.png", fullPage: true });
 
   // Jejum disponível com protocolos e bloqueio de 18 h sem confirmação
@@ -70,7 +70,7 @@ test("onboarding, registros e dashboard real", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Iniciar jejum de 18 h" })).toBeDisabled();
   await page.getByRole("button", { name: /^16 h/ }).click();
   await page.getByRole("button", { name: "Iniciar jejum de 16 h" }).click();
-  await expect(page.getByText("Em jejum", { exact: true })).toBeVisible();
+  await expect(page.getByText("Em Jejum", { exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/05-jejum.png", fullPage: true });
 
   // Atividade
@@ -141,7 +141,9 @@ async function mealYesterday(page: Page) {
   await page.goto("/app/alimentacao/nova");
   const d = new Date(Date.now() - 86_400_000);
   const pad = (n: number) => String(n).padStart(2, "0");
-  await page.getByLabel("Data e hora").fill(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T12:00`);
+  await page
+    .getByLabel("Data e hora")
+    .fill(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T12:00`);
   await page.getByLabel("Buscar na base nutricional").fill("arroz branco");
   await page.getByRole("button", { name: /Arroz branco cozido/ }).click();
   await page.getByRole("button", { name: "Adicionar", exact: true }).click();

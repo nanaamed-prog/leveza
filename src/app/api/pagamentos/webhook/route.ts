@@ -51,19 +51,17 @@ export async function POST(req: Request) {
         .select("status")
         .eq("provider_payment_id", String(p.id))
         .maybeSingle();
-      await admin
-        .from("payments")
-        .upsert(
-          {
-            user_id: ref.userId,
-            provider_payment_id: String(p.id),
-            plan: ref.plan,
-            period: ref.period,
-            amount: p.transaction_amount,
-            status: p.status,
-          },
-          { onConflict: "provider_payment_id" },
-        );
+      await admin.from("payments").upsert(
+        {
+          user_id: ref.userId,
+          provider_payment_id: String(p.id),
+          plan: ref.plan,
+          period: ref.period,
+          amount: p.transaction_amount,
+          status: p.status,
+        },
+        { onConflict: "provider_payment_id" },
+      );
       const { data: sub } = await admin
         .from("subscriptions")
         .select("current_period_end")
@@ -106,19 +104,17 @@ export async function POST(req: Request) {
         const pa0 = await getPreapproval(preapprovalId);
         const ref0 = parseExternalRef(pa0.external_reference);
         if (ref0)
-          await admin
-            .from("payments")
-            .upsert(
-              {
-                user_id: ref0.userId,
-                provider_payment_id: `ap_${ap.id}`,
-                plan: ref0.plan,
-                period: "mensal",
-                amount: ap.transaction_amount,
-                status: ap.status,
-              },
-              { onConflict: "provider_payment_id" },
-            );
+          await admin.from("payments").upsert(
+            {
+              user_id: ref0.userId,
+              provider_payment_id: `ap_${ap.id}`,
+              plan: ref0.plan,
+              period: "mensal",
+              amount: ap.transaction_amount,
+              status: ap.status,
+            },
+            { onConflict: "provider_payment_id" },
+          );
       }
       const pa = await getPreapproval(preapprovalId);
       const ref = parseExternalRef(pa.external_reference);

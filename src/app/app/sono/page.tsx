@@ -92,35 +92,35 @@ function SleepInner() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Meu sono"
+        title="Movimento e Sono"
         back="/app"
         action={
           <Button size="icon" aria-label="Registrar sono" onClick={() => setOpen(true)}>
             <Plus />
-            <div
-              role="tablist"
-              aria-label="Movimento e sono"
-              className="grid grid-cols-2 rounded-full bg-line/60 p-1"
-            >
-              <Link
-                role="tab"
-                aria-selected="false"
-                href="/app/movimento"
-                className="flex min-h-10 items-center justify-center rounded-full text-sm font-semibold text-muted"
-              >
-                Atividade física
-              </Link>
-              <span
-                role="tab"
-                aria-selected="true"
-                className="flex min-h-10 items-center justify-center rounded-full bg-forest text-sm font-semibold text-white"
-              >
-                Sono
-              </span>
-            </div>
           </Button>
         }
       />
+      <div
+        role="tablist"
+        aria-label="Movimento e sono"
+        className="grid grid-cols-2 rounded-full bg-line/60 p-1"
+      >
+        <Link
+          role="tab"
+          aria-selected="false"
+          href="/app/movimento"
+          className="flex min-h-10 items-center justify-center rounded-full text-sm font-semibold text-muted"
+        >
+          Atividade Física
+        </Link>
+        <span
+          role="tab"
+          aria-selected="true"
+          className="flex min-h-10 items-center justify-center rounded-full bg-forest text-sm font-semibold text-white"
+        >
+          Sono
+        </span>
+      </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         <Card className="p-3">
           <p className="text-xs font-semibold text-muted">Média 7 dias</p>

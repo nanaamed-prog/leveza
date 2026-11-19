@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase/client";
 
 /** Mostra uma foto privada usando URL assinada que expira em 5 minutos. */
-export function SignedPhoto({ path, alt }: { path: string; alt: string }) {
+export function SignedPhoto({
+  path,
+  alt,
+  className = "size-16 rounded-xl object-cover",
+}: {
+  path: string;
+  alt: string;
+  className?: string;
+}) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     const sb = getSupabase();
@@ -18,14 +26,7 @@ export function SignedPhoto({ path, alt }: { path: string; alt: string }) {
       alive = false;
     };
   }, [path]);
-  if (!url) return <div className="skeleton size-16 rounded-xl" aria-hidden />;
+  if (!url) return <div className={`skeleton ${className}`} aria-hidden />;
   // eslint-disable-next-line @next/next/no-img-element
-  return (
-    <img
-      src={url}
-      alt={alt}
-      className="size-16 rounded-xl object-cover"
-      referrerPolicy="no-referrer"
-    />
-  );
+  return <img src={url} alt={alt} className={className} referrerPolicy="no-referrer" />;
 }

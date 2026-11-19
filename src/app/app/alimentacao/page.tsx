@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/leveza/EmptyState";
 import { MacroRing } from "@/components/leveza/MacroRing";
+import { MealPhotoCard } from "@/components/leveza/MealPhotoCard";
 import { Badge } from "@/components/ui/badge";
 import { SignedPhoto } from "@/components/leveza/SignedPhoto";
 import { useAppData, useRecords } from "@/lib/data/provider";
@@ -43,6 +44,8 @@ export default function FoodPage() {
   const macros = sumMacros(
     items.data.map((i) => ({ proteinG: i.protein_g, carbsG: i.carbs_g, fatG: i.fat_g })),
   );
+  const last = entries.data.length ? entries.data[entries.data.length - 1] : undefined;
+  const lastItems = last ? items.data.filter((i) => i.food_entry_id === last.id) : [];
   const byMeal = (Object.keys(MEAL_LABELS) as Meal[]).map((m) => ({
     meal: m,
     entries: entries.data.filter((e) => e.meal === m),
@@ -78,6 +81,7 @@ export default function FoodPage() {
     <div className="space-y-4">
       <PageHeader
         title="Alimentação"
+        back="/app"
         action={
           <Button asChild size="icon" aria-label="Nova refeição">
             <Link href="/app/alimentacao/nova">
@@ -103,7 +107,7 @@ export default function FoodPage() {
             role="tab"
             aria-selected={view === k}
             onClick={() => setView(k)}
-            className={`min-h-10 rounded-full text-sm font-semibold ${view === k ? "bg-forest text-white" : "text-muted"}`}
+            className={`min-h-10 rounded-full text-sm font-semibold ${view === k ? "bg-forest text-white shadow-sm" : "text-ink/80"}`}
           >
             {label}
           </button>
@@ -122,18 +126,44 @@ export default function FoodPage() {
         <>
           <DayNav value={day} onChange={setDay} today={today} />
 
-          <Card>
+          <MealPhotoCard
+            photoPath={store?.kind === "supabase" ? (last?.photo_path ?? null) : null}
+            alt={last ? `Foto da refeição ${MEAL_LABELS[last.meal]}` : "Prato ilustrativo"}
+          />
+
+          {last && (
+            <Card className="p-4">
+              <CardTitle className="mb-2 text-base">
+                {last.source === "foto_ia"
+                  ? "Análise da refeição (IA)"
+                  : `Última refeição · ${MEAL_LABELS[last.meal]}`}
+              </CardTitle>
+              <ul className="divide-y divide-line text-sm text-ink">
+                {lastItems.map((i) => (
+                  <li key={i.id} className="flex justify-between gap-3 py-1.5">
+                    <span className="min-w-0 truncate">
+                      {i.name} ({fmtInt(i.grams)} {i.unit === "ml" ? "ml" : "g"})
+                    </span>
+                    <span className="tabular shrink-0 font-semibold">{fmtInt(i.kcal)} kcal</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-2 flex items-center justify-between rounded-xl bg-orange-soft px-3 py-2.5 font-display font-bold text-ink">
+                <span>Total da refeição</span>
+                <span className="tabular">{fmtInt(last.total_kcal)} kcal</span>
+              </div>
+            </Card>
+          )}
+
+          <Card className="p-4">
             <div className="mb-3 flex items-baseline justify-between">
-              <CardTitle>Total do dia</CardTitle>
-              <span className="tabular font-display text-xl font-bold text-forest">
-                {fmtInt(total)} kcal
-              </span>
+              <CardTitle className="text-base">Classificação nutricional</CardTitle>
+              <span className="text-xs text-muted">total do dia</span>
             </div>
-            <MacroRing macros={macros} />
-            <p className="mt-3 text-xs text-muted">
-              Percentuais calculados sobre a energia dos três macros (proteína e carboidrato 4
-              kcal/g; gordura 9 kcal/g). Podem diferir do total por fibras, álcool e
-              arredondamentos.
+            <MacroRing macros={macros} centerKcal={total} size={112} />
+            <p className="mt-3 text-[0.7rem] text-muted">
+              Percentuais sobre a energia dos três macros (proteína e carboidrato 4 kcal/g; gordura
+              9 kcal/g). Podem diferir do total por fibras, álcool e arredondamentos.
             </p>
           </Card>
 

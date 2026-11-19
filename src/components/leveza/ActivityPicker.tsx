@@ -52,6 +52,8 @@ export function ActivityPicker({
   onSubmit: (row: Insert<"activity_entries">) => Promise<void>;
 }) {
   const [mountedAt] = useState(() => Date.now());
+  const presetType =
+    initialType && ACTIVITY_TYPES.some((a) => a.id === initialType) ? initialType : "caminhada";
   const { register, handleSubmit, setValue, control, formState } = useForm<Values, unknown, Parsed>(
     {
       resolver: zodResolver(schema),
@@ -69,11 +71,11 @@ export function ActivityPicker({
             notes: initial.notes ?? "",
           }
         : {
-            activity_type: "caminhada",
+            activity_type: presetType,
             start: toLocalInput(mountedAt - 30 * 60_000, tz),
             minutes: 30,
             intensity: "moderada",
-            met: metFor("caminhada", "moderada"),
+            met: metFor(presetType, "moderada"),
             perceived_effort: "",
             notes: "",
           },

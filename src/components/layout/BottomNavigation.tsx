@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, Utensils, Footprints, TrendingUp, UserRound } from "lucide-react";
+import { House, Utensils, PersonStanding, ChartColumn, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/app", label: "Início", icon: House, exact: true },
   { href: "/app/alimentacao", label: "Alimentação", icon: Utensils },
-  { href: "/app/movimento", label: "Movimento", icon: Footprints },
-  { href: "/app/evolucao", label: "Evolução", icon: TrendingUp },
+  { href: "/app/movimento", label: "Movimento", icon: PersonStanding },
+  { href: "/app/evolucao", label: "Evolução", icon: ChartColumn },
   { href: "/app/perfil", label: "Perfil", icon: UserRound },
 ];
 
@@ -29,18 +29,16 @@ export function BottomNavigation() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-full flex-col items-center justify-center gap-1 text-[0.7rem] font-semibold",
-                  active ? "text-forest" : "text-muted",
+                  "flex h-full flex-col items-center justify-center gap-1 text-[0.7rem]",
+                  active ? "font-bold text-orange-ink" : "font-medium text-ink/80",
                 )}
               >
-                <span
-                  className={cn(
-                    "flex h-7 w-12 items-center justify-center rounded-full",
-                    active && "bg-orange-soft",
-                  )}
-                >
-                  <Icon className={cn("size-5", active && "text-orange-ink")} aria-hidden />
-                </span>
+                <Icon
+                  className={cn("size-6", active ? "text-orange" : "text-ink/80")}
+                  strokeWidth={active ? 2.4 : 1.8}
+                  fill={active && href === "/app" ? "currentColor" : "none"}
+                  aria-hidden
+                />
                 {label}
               </Link>
             </li>

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
 
+/** Cabeçalho das telas internas: seta de voltar à esquerda e título centralizado. */
 export function PageHeader({
   title,
   subtitle,
@@ -16,23 +17,25 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <header className="mb-4 flex items-start gap-2 pt-2">
-      {back && (
-        <Link
-          href={back}
-          aria-label="Voltar"
-          className="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-full text-forest hover:bg-sage-soft"
-        >
-          <ArrowLeft className="size-5" />
-        </Link>
-      )}
-      <div className="min-w-0 flex-1">
-        <h1 className="text-[length:var(--text-display)] font-bold leading-tight text-ink">
+    <header className="mb-4 pt-2">
+      <div className="grid grid-cols-[minmax(2.75rem,1fr)_auto_minmax(2.75rem,1fr)] gap-1 items-center">
+        <div>
+          {back && (
+            <Link
+              href={back}
+              aria-label="Voltar"
+              className="-ml-2 flex size-11 items-center justify-center rounded-full text-ink hover:bg-sage-soft"
+            >
+              <ChevronLeft className="size-6" strokeWidth={2.2} />
+            </Link>
+          )}
+        </div>
+        <h1 className="text-center font-display text-[1.3rem] font-bold leading-tight text-ink">
           {title}
         </h1>
-        {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
+        <div className="flex justify-end">{action}</div>
       </div>
-      {action}
+      {subtitle && <p className="mt-1 text-center text-sm text-muted">{subtitle}</p>}
     </header>
   );
 }

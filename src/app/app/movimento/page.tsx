@@ -3,8 +3,11 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
+  Activity,
   Bike,
+  ChartColumn,
   Dumbbell,
+  Flame,
   Footprints,
   Music,
   Pencil,
@@ -36,6 +39,7 @@ import {
 import type { ActivityEntry, Insert } from "@/lib/data/types";
 import { fmtInt, todayKey } from "@/lib/utils";
 import { LoadingSkeleton } from "@/components/leveza/LoadingSkeleton";
+import { SleepSummary } from "@/components/leveza/SleepSummary";
 
 function MovementInner() {
   const params = useSearchParams();
@@ -53,10 +57,13 @@ function MovementInner() {
   const weekStart = startOfWeek(today, profile?.week_starts_on ?? 1);
   const monthStart = today.slice(0, 8) + "01";
   const totals = useMemo(() => {
-    const t = { dia: 0, semana: 0, mes: 0, kcalSemana: 0 };
+    const t = { dia: 0, kcalDia: 0, semana: 0, mes: 0, kcalSemana: 0 };
     for (const a of acts.data) {
       const k = localDateKey(Date.parse(a.started_at), tz);
-      if (k === today) t.dia += mins(a);
+      if (k === today) {
+        t.dia += mins(a);
+        t.kcalDia += a.kcal_estimated;
+      }
       if (k >= weekStart) {
         t.semana += mins(a);
         t.kcalSemana += a.kcal_estimated;
@@ -86,15 +93,7 @@ function MovementInner() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Meu movimento"
-        subtitle="Mexer o corpo é cuidado — não é moeda para “merecer” comida."
-        action={
-          <Button size="icon" aria-label="Registrar atividade" onClick={() => setOpen(true)}>
-            <Plus />
-          </Button>
-        }
-      />
+      <PageHeader title="Movimento e Sono" back="/app" />
       <div
         role="tablist"
         aria-label="Movimento e sono"
@@ -105,7 +104,7 @@ function MovementInner() {
           aria-selected="true"
           className="flex min-h-10 items-center justify-center rounded-full bg-forest text-sm font-semibold text-white"
         >
-          Atividade física
+          Atividade Física
         </span>
         <Link
           role="tab"
@@ -123,7 +122,8 @@ function MovementInner() {
       >
         <div className="mb-2 flex items-center justify-between">
           <h2 className="flex items-center gap-2 font-display font-semibold">
-            <Footprints className="size-5 text-forest" aria-hidden /> Registrar atividade
+            <PersonStanding className="size-6 text-forest" strokeWidth={2.4} aria-hidden />{" "}
+            Registrar atividade
           </h2>
           <button
             type="button"
@@ -132,7 +132,7 @@ function MovementInner() {
               setOpen(true);
             }}
             aria-label="Outra atividade"
-            className="flex size-9 items-center justify-center rounded-full bg-forest text-white"
+            className="flex size-8 items-center justify-center rounded-full bg-forest text-white"
           >
             <Plus className="size-5" />
           </button>
@@ -143,7 +143,7 @@ function MovementInner() {
               ["caminhada", "Caminhada", PersonStanding],
               ["musculacao", "Musculação", Dumbbell],
               ["danca", "Dança", Music],
-              ["pilates", "Pilates", PersonStanding],
+              ["pilates", "Pilates", Activity],
               ["bicicleta", "Bike", Bike],
               ["funcional", "Funcional", Zap],
             ] as const
@@ -156,29 +156,37 @@ function MovementInner() {
                 setEditing(null);
                 setOpen(true);
               }}
-              className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-line bg-canvas text-xs font-semibold text-ink hover:border-sage"
+              className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1.5 rounded-2xl border border-line bg-card text-xs font-medium text-ink shadow-sm hover:border-sage"
             >
-              <Icon className="size-6 text-forest" aria-hidden />
+              <Icon className="size-7 text-forest" strokeWidth={2.2} aria-hidden />
               {label}
             </button>
           ))}
         </div>
       </section>
 
-      <div className="grid grid-cols-3 gap-2 text-center">
-        {[
-          ["Hoje", totals.dia],
-          ["Semana", totals.semana],
-          ["Mês", totals.mes],
-        ].map(([l, v]) => (
-          <Card key={l as string} className="p-3">
-            <p className="text-xs font-semibold text-muted">{l}</p>
-            <p className="tabular font-display text-lg font-bold">
-              {(v as number) > 0 ? formatDuration(v as number) : "—"}
-            </p>
-          </Card>
-        ))}
-      </div>
+      <Card className="flex items-center gap-3 p-4">
+        <span className="flex size-9 items-center justify-center rounded-full bg-sage-soft">
+          <Footprints className="size-5 text-forest" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-ink">Hoje</p>
+          <p className="tabular flex flex-wrap items-center gap-x-5 font-display text-base font-bold text-ink">
+            <span>{totals.dia > 0 ? formatDuration(totals.dia) : "0 min"}</span>
+            <span className="flex items-center gap-1">
+              <Flame className="size-5 text-orange" aria-hidden />
+              {fmtInt(totals.kcalDia)} kcal
+            </span>
+          </p>
+        </div>
+        <ChartColumn className="size-6 text-forest" aria-hidden />
+      </Card>
+      <p className="tabular -mt-2 px-1 text-xs text-muted">
+        Semana: {totals.semana > 0 ? formatDuration(totals.semana) : "—"} · Mês:{" "}
+        {totals.mes > 0 ? formatDuration(totals.mes) : "—"}
+      </p>
+
+      <SleepSummary />
 
       {byType.length > 0 && (
         <Card>
@@ -196,6 +204,10 @@ function MovementInner() {
           </p>
         </Card>
       )}
+
+      <p className="px-1 text-xs text-muted">
+        Mexer o corpo é cuidado — não é moeda para “merecer” comida.
+      </p>
 
       {acts.loading ? null : acts.data.length === 0 ? (
         <EmptyState
