@@ -165,3 +165,26 @@ test("lactante: saldo aparece, estimativa de perda de peso não", async ({ page 
   await expect(page.getByText(/Saldo em 1 dia/)).toBeVisible();
   await expect(page.getByText("Peso estimado pelo saldo")).toHaveCount(0);
 });
+
+test("editar meta diária de calorias pelo início", async ({ page }) => {
+  await onboard(page);
+  await page.getByRole("button", { name: "Definir meta diária de calorias" }).click();
+  await page.getByLabel("Meta (kcal por dia)").fill("900");
+  await page.getByRole("button", { name: "Salvar meta" }).click();
+  await expect(page.getByText(/Use um valor entre/)).toBeVisible();
+  await page.getByLabel("Meta (kcal por dia)").fill("1800");
+  await page.getByRole("button", { name: "Salvar meta" }).click();
+  await expect(page.getByText("meta 1.800")).toBeVisible();
+  await page.getByRole("button", { name: /Editar meta diária \(1\.800 kcal\)/ }).click();
+  await page.getByRole("button", { name: "+100" }).click();
+  await page.getByRole("button", { name: "Salvar meta" }).click();
+  await expect(page.getByText("meta 1.900")).toBeVisible();
+});
+
+test("lactante: meta não pode ficar abaixo do gasto estimado", async ({ page }) => {
+  await onboard(page, { breastfeeding: true });
+  await page.getByRole("button", { name: "Definir meta diária de calorias" }).click();
+  await page.getByLabel("Meta (kcal por dia)").fill("1300");
+  await page.getByRole("button", { name: "Salvar meta" }).click();
+  await expect(page.getByText(/não pode ficar abaixo do gasto estimado/)).toBeVisible();
+});

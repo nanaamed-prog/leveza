@@ -1,6 +1,6 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { Info, Pencil } from "lucide-react";
 import { useState } from "react";
 import { ProgressRing } from "./ProgressRing";
 import { Card } from "@/components/ui/card";
@@ -15,6 +15,7 @@ export function EnergyBalanceCard({
   kcalTarget,
   isToday,
   isRange,
+  onEditGoal,
 }: {
   consumed: number;
   energy: DayEnergyResult | null;
@@ -22,6 +23,7 @@ export function EnergyBalanceCard({
   kcalTarget: number | null;
   isToday: boolean;
   isRange: boolean;
+  onEditGoal?: () => void;
 }) {
   const [info, setInfo] = useState(false);
   const spent = energy?.elapsed.kcal ?? null;
@@ -86,6 +88,18 @@ export function EnergyBalanceCard({
           </div>
         </dl>
       </div>
+      {onEditGoal && (
+        <button
+          type="button"
+          onClick={onEditGoal}
+          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-button border border-white/25 text-sm font-semibold text-white hover:bg-white/10"
+        >
+          <Pencil className="size-4" aria-hidden />
+          {kcalTarget
+            ? `Editar meta diária (${fmtInt(kcalTarget)} kcal)`
+            : "Definir meta diária de calorias"}
+        </button>
+      )}
       <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-xs text-sage">
         {energyMissing ??
           (balance !== null

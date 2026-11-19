@@ -10,7 +10,12 @@ import { EligibilityNotice } from "@/components/leveza/EligibilityNotice";
 import { useAppData } from "@/lib/data/provider";
 import { useDaySummary, usePersonalBasics } from "@/lib/data/useDaySummary";
 import { calculateBmi, healthyWeightRange } from "@/lib/calc/bmi";
-import { assessWeightGoal, suggestIntakeTarget, type GoalType } from "@/lib/calc/weight";
+import {
+  assessWeightGoal,
+  kcalTargetFloor,
+  suggestIntakeTarget,
+  type GoalType,
+} from "@/lib/calc/weight";
 import { fmt1, fmtInt, todayKey } from "@/lib/utils";
 
 export default function PlanPage() {
@@ -54,8 +59,12 @@ function PlanInner() {
     deficitAllowed: eligibility.calorieDeficit.allowed,
   });
   const kcalN = n(kcal);
-  const kcalFloor = Math.max(basics.bmr?.low ?? 0, 1200);
-  const kcalTooLow = kcalN !== null && type === "perder" && kcalN < kcalFloor;
+  const kcalFloor = kcalTargetFloor({
+    deficitAllowed: eligibility.calorieDeficit.allowed,
+    bmrLow: basics.bmr?.low ?? null,
+    projectedExpenditure: summary.energy?.projected24h.kcal ?? null,
+  });
+  const kcalTooLow = kcalN !== null && kcalN < kcalFloor;
 
   async function save() {
     if (!store) return;
@@ -73,7 +82,7 @@ function PlanInner() {
     await store.insert("goals", {
       type,
       target_weight_kg: type === "perder" || type === "ganhar" ? n(target) : null,
-      kcal_target: type === "habitos" ? null : kcalN,
+      kcal_target: kcalN,
       weekly_rate_kg: type === "perder" || type === "ganhar" ? n(rate) : null,
       status: "ativa",
     });
@@ -203,7 +212,7 @@ function PlanInner() {
             ))}
           </div>
         )}
-        {type !== "habitos" && (
+        {
           <div className="space-y-2">
             <Field
               label="Meta diária de consumo (kcal) — opcional"
@@ -233,7 +242,7 @@ function PlanInner() {
               <CardHint>Não sugerimos déficit calórico para o seu perfil de triagem.</CardHint>
             ) : null}
           </div>
-        )}
+        }
         {msg && (
           <p role="status" className="text-sm font-semibold text-forest">
             {msg}

@@ -140,3 +140,16 @@ export function cumulativeBalanceEstimate(rows: { date: string; balance: number 
     averageDailyKcal: valid.length ? total / valid.length : null,
   };
 }
+
+/**
+ * Menor meta diária de consumo que o app aceita salvar.
+ * - Perfil que permite déficit: nunca abaixo de 1.200 kcal nem da TMB estimada (limite inferior da faixa).
+ * - Perfil sem déficit (gestação, amamentação, menores, contraindicações): a meta não pode ficar
+ *   abaixo do gasto estimado do dia — ou seja, não vira meta restritiva.
+ */
+export function kcalTargetFloor(p: { deficitAllowed: boolean; bmrLow: number | null; projectedExpenditure: number | null }): number {
+  if (p.deficitAllowed) return Math.max(1200, Math.round(p.bmrLow ?? 0));
+  return Math.max(1200, Math.round((p.projectedExpenditure ?? 0) / 10) * 10);
+}
+
+export const KCAL_TARGET_MAX = 6000;

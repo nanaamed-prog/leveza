@@ -144,3 +144,16 @@ describe("saldo acumulado e peso estimado (7.700 kcal ≈ 1 kg)", () => {
     expect(cumulativeBalanceEstimate([], "2026-11-19").averageDailyKcal).toBeNull();
   });
 });
+
+import { kcalTargetFloor } from "@/lib/calc/weight";
+
+describe("piso da meta de calorias", () => {
+  it("com déficit permitido: TMB ou 1.200", () => {
+    expect(kcalTargetFloor({ deficitAllowed: true, bmrLow: 1350, projectedExpenditure: 2100 })).toBe(1350);
+    expect(kcalTargetFloor({ deficitAllowed: true, bmrLow: null, projectedExpenditure: null })).toBe(1200);
+  });
+  it("sem déficit (ex.: lactante): não abaixo do gasto estimado", () => {
+    expect(kcalTargetFloor({ deficitAllowed: false, bmrLow: 1350, projectedExpenditure: 2234 })).toBe(2230);
+    expect(kcalTargetFloor({ deficitAllowed: false, bmrLow: null, projectedExpenditure: null })).toBe(1200);
+  });
+});

@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { EnergyBalanceCard } from "@/components/leveza/EnergyBalanceCard";
+import { KcalGoalSheet } from "@/components/leveza/KcalGoalSheet";
+import { useState } from "react";
 import { StatCard } from "@/components/leveza/StatCard";
 import { MacroProgress } from "@/components/leveza/MacroProgress";
 import { MACRO_COLORS } from "@/components/leveza/MacroRing";
@@ -43,6 +45,7 @@ export default function Dashboard() {
     now,
   );
   const share = macroBreakdown(s.macros).percent;
+  const [goalOpen, setGoalOpen] = useState(false);
   const active = eligibility.fasting.allowed ? fasting.data.find((f) => !f.ended_at) : undefined;
 
   const quick = [
@@ -94,6 +97,15 @@ export default function Dashboard() {
         kcalTarget={goal?.kcal_target ?? null}
         isToday
         isRange={s.bmr?.isRange ?? true}
+        onEditGoal={() => setGoalOpen(true)}
+      />
+      <KcalGoalSheet
+        key={`${goalOpen}-${goal?.kcal_target ?? ""}`}
+        open={goalOpen}
+        onOpenChange={setGoalOpen}
+        projectedExpenditure={s.energy?.projected24h.kcal ?? null}
+        bmrKcal={s.bmr?.kcal ?? null}
+        bmrLow={s.bmr?.low ?? null}
       />
 
       <nav aria-label="Ações rápidas" className="-mx-4 overflow-x-auto px-4">
