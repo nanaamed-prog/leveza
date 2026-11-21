@@ -213,3 +213,22 @@ test("desativar o Modo Lactante atualiza a triagem e libera o modo padrão", asy
   await page.goto("/app/jejum");
   await expect(page.getByRole("button", { name: "Iniciar jejum de 12 h" })).toBeEnabled();
 });
+
+test("resetar o dia e resetar todos os dias", async ({ page }) => {
+  await onboard(page);
+  await page.goto("/app/agua");
+  await page.getByRole("button", { name: "300 ml" }).click();
+  await expect(page.getByText("300", { exact: true }).first()).toBeVisible();
+  await page.goto("/app/configuracoes");
+  await page.getByRole("button", { name: "Resetar o dia" }).click();
+  await page.getByRole("button", { name: "Apagar o dia" }).click();
+  await expect(page.getByText(/registro\(s\) de hoje apagado/)).toBeVisible();
+  await page.getByRole("button", { name: "Resetar todos os dias" }).click();
+  const apagar = page.getByRole("button", { name: "Apagar tudo" });
+  await expect(apagar).toBeDisabled();
+  await page.getByLabel("Para confirmar, digite APAGAR").fill("apagar");
+  await apagar.click();
+  await expect(page.getByText("Todos os registros diários foram apagados")).toBeVisible();
+  await page.goto("/app");
+  await expect(page.getByRole("heading", { name: /Ana/ })).toBeVisible();
+});

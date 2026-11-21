@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PrivacyControls } from "@/components/leveza/PrivacyControls";
+import { ResetControls } from "@/components/leveza/ResetControls";
 import { Card, CardHint, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/form";
 import { useAppData } from "@/lib/data/provider";
@@ -43,6 +44,7 @@ export default function SettingsPage() {
           aberto. Notificações push em segundo plano estão no roteiro.
         </CardHint>
       </Card>
+      <ResetControls />
       <PrivacyControls />
       <Card>
         <CardTitle>Sobre as estimativas</CardTitle>

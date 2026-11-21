@@ -5,7 +5,12 @@ import { hasFeature, type Feature, type PlanId } from "@/lib/plans";
 let current: PlanId = "gratis";
 let trialUsed = false;
 vi.mock("@/lib/data/usePlan", () => ({
-  usePlan: () => ({ loading: false, plan: current, trialUsed, can: (f: Feature) => hasFeature(current, f) }),
+  usePlan: () => ({
+    loading: false,
+    plan: current,
+    trialUsed,
+    can: (f: Feature) => hasFeature(current, f),
+  }),
 }));
 
 describe("PlusGate", () => {
@@ -17,7 +22,10 @@ describe("PlusGate", () => {
       </PlusGate>,
     );
     expect(screen.queryByText("conteúdo pago")).toBeNull();
-    expect(screen.getByRole("link", { name: /Testar 7 dias grátis/ })).toHaveAttribute("href", "/app/planos");
+    expect(screen.getByRole("link", { name: /Testar 7 dias grátis/ })).toHaveAttribute(
+      "href",
+      "/app/planos",
+    );
   });
   it("Plus vê o conteúdo; IA continua bloqueada no Plus", () => {
     current = "plus";
