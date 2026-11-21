@@ -4,7 +4,7 @@
  * Quando a IA está configurada no servidor, ela pode refinar — mas este parser é sempre o plano B.
  */
 
-import { FOODS, bestMatch, normalize, type FoodRef } from "./foods";
+import { FOODS, bestMatch, exactMatch, normalize, type FoodRef } from "./foods";
 
 export interface ParsedMealItem {
   text: string; // trecho original
@@ -62,6 +62,29 @@ const UNIT_WORDS: Record<string, string> = {
   quadradinho: "quadradinho",
   quadradinhos: "quadradinho",
   fio: "fio",
+  taca: "taca",
+  tacas: "taca",
+  dose: "dose",
+  doses: "dose",
+  garrafa: "garrafa",
+  garrafas: "garrafa",
+  garrafinha: "garrafinha",
+  caneca: "caneca",
+  canecas: "caneca",
+  cuia: "cuia",
+  tigela: "tigela",
+  tigelas: "tigela",
+  peca: "peca",
+  pecas: "peca",
+  espeto: "espeto",
+  espetos: "espeto",
+  espiga: "espiga",
+  espigas: "espiga",
+  gomo: "gomo",
+  rodela: "rodela",
+  rodelas: "rodela",
+  caixinha: "caixinha",
+  pacote: "pacote",
 };
 
 /** Divide a frase em trechos: vírgulas, ponto e vírgula, quebras de linha, " e ", " com ", " mais ". */
@@ -74,8 +97,6 @@ export function splitDescription(text: string): string[] {
 }
 
 function matchFood(rest: string): FoodRef | null {
-  const direct = bestMatch(rest);
-  if (direct) return direct;
   // plural simples: "bananas" → "banana", "paes" → "pao"
   const singular = normalize(rest)
     .split(" ")
@@ -87,7 +108,7 @@ function matchFood(rest: string): FoodRef | null {
           : w,
     )
     .join(" ");
-  return bestMatch(singular);
+  return exactMatch(rest) ?? exactMatch(singular) ?? bestMatch(rest) ?? bestMatch(singular);
 }
 
 const FILLER = /^(hoje\s+)?(eu\s+)?(comi|tomei|bebi|almocei|jantei|lanchei|belisquei|tambem|e)\s+/;

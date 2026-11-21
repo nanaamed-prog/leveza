@@ -1,4 +1,4 @@
-import { searchFoods, bestMatch, nutrientsFor, FOODS } from "@/lib/nutrition/foods";
+import { searchFoods, bestMatch, nutrientsFor, FOODS, ALCOHOLIC_IDS } from "@/lib/nutrition/foods";
 import { sniffImageType } from "@/lib/server/vision";
 
 vi.mock("server-only", () => ({}));
@@ -16,6 +16,7 @@ describe("base nutricional", () => {
   it("todo alimento registra fonte e valores coerentes", () => {
     for (const f of FOODS) {
       expect(f.source).toBeTruthy();
+      if (ALCOHOLIC_IDS.has(f.id)) continue;
       const fromMacros = f.per100.protein * 4 + f.per100.carbs * 4 + f.per100.fat * 9;
       // tolerância: fibras, álcool e fatores específicos
       expect(Math.abs(fromMacros - f.per100.kcal)).toBeLessThan(Math.max(25, f.per100.kcal * 0.2));
