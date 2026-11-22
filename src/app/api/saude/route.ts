@@ -29,6 +29,10 @@ export async function GET() {
     return NextResponse.json({
       banco: "sem_resposta",
       erro: e instanceof Error ? e.name : "desconhecido",
+      causa:
+        e instanceof Error && e.cause && typeof e.cause === "object" && "code" in e.cause
+          ? String((e.cause as { code: unknown }).code)
+          : null,
       ms: Date.now() - started,
     });
   }
