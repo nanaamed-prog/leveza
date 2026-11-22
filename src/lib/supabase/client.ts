@@ -19,6 +19,9 @@ export function getSupabase(): SupabaseClient | null {
         autoRefreshToken: true,
         detectSessionInUrl: true,
         flowType: "pkce",
+        // Evita travamento do bloqueio de sessão (navigator.locks) quando o celular
+        // retoma o app instalado depois de um tempo em segundo plano.
+        lock: async (_name, _acquireTimeout, fn) => fn(),
       },
     });
   }

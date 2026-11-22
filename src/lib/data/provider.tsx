@@ -24,7 +24,26 @@ import type {
 import { evaluateEligibility, type Eligibility } from "@/lib/calc/eligibility";
 import { DEFAULT_TZ } from "@/lib/dates";
 
-type Status = "loading" | "signed_out" | "ready";
+type Status = "loading" | "signed_out" | "ready" | "error";
+
+const LOAD_TIMEOUT_MS = 12_000;
+
+/** Rejeita se a promessa não terminar a tempo (rede lenta ou travada). */
+function withTimeout<T>(p: Promise<T>, ms = LOAD_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("timeout")), ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
 
 interface AppData {
   status: Status;
@@ -75,11 +94,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       };
     }
     const sb = getSupabase()!;
-    sb.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session) setStore(new SupabaseStore(sb, data.session.user.id));
-      else setStatus("signed_out");
-    });
+    withTimeout(sb.auth.getSession())
+      .then(({ data }) => {
+        setSession(data.session);
+        if (data.session) setStore(new SupabaseStore(sb, data.session.user.id));
+        else setStatus("signed_out");
+      })
+      .catch(() => setStatus("error"));
     const { data: sub } = sb.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       if (s)
@@ -100,21 +121,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const [p, prefs, scr, goals, weights] = await Promise.all([
-          store.getSingle("profiles"),
-          store.getSingle("user_preferences"),
-          store.list("health_screenings", { limit: 1 }),
-          store.list("goals", { eq: { status: "ativa" }, limit: 1 }),
-          store.list("weight_entries", { limit: 1 }),
-        ]);
+        const [p, prefs, scr, goals, weights] = await withTimeout(
+          Promise.all([
+            store.getSingle("profiles"),
+            store.getSingle("user_preferences"),
+            store.list("health_screenings", { limit: 1 }),
+            store.list("goals", { eq: { status: "ativa" }, limit: 1 }),
+            store.list("weight_entries", { limit: 1 }),
+          ]),
+        );
         if (cancelled) return;
         setProfile(p);
         setPreferences(prefs);
         setScreening(scr[0] ?? null);
         setGoal(goals[0] ?? null);
         setLatestWeight(weights[0] ?? null);
-      } finally {
-        if (!cancelled) setStatus("ready");
+        setStatus("ready");
+      } catch {
+        // Sem dados não dá para decidir nada (ex.: mandar para o cadastro): mostra erro e “tentar de novo”.
+        if (!cancelled) setStatus("error");
       }
     })();
     return () => {
