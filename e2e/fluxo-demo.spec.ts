@@ -268,3 +268,12 @@ test("plano de emagrecimento no Modo Lactante é só informativo", async ({ page
   await expect(page.getByRole("button", { name: /Salvar plano/ })).toHaveCount(0);
   await page.screenshot({ path: "test-results/10-plano-lactante.png", fullPage: true });
 });
+
+test("lactante: gasto do dia inclui a amamentação e o tipo pode ser ajustado", async ({ page }) => {
+  await onboard(page, { breastfeeding: true });
+  await expect(page.getByText(/inclui ~\d+ kcal da amamentação/)).toBeVisible();
+  await page.goto("/app/lactante");
+  const group = page.getByRole("radiogroup", { name: "Padrão de amamentação" });
+  await group.getByRole("radio", { name: "Exclusiva" }).click();
+  await expect(page.getByText(/cerca de 450 kcal/)).toBeVisible();
+});

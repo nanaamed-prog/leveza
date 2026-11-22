@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox, Field, Input } from "@/components/ui/form";
 import { ConfirmationDialog } from "@/components/ui/dialog";
 import { EligibilityNotice } from "@/components/leveza/EligibilityNotice";
+import { BreastfeedingPatternPicker } from "@/components/leveza/BreastfeedingPatternPicker";
 import { LoadingSkeleton } from "@/components/leveza/LoadingSkeleton";
 import {
   EtaHistoryChart,
@@ -178,9 +179,7 @@ function PlanInner({
   const [scenario, setScenario] = useState<ScenarioKey | "personalizado">(
     openPlan?.scenario ?? "moderada",
   );
-  const [pattern, setPattern] = useState<BreastfeedingPattern>(
-    profile?.breastfeeding_pattern ?? "nao_informado",
-  );
+  const pattern: BreastfeedingPattern = profile?.breastfeeding_pattern ?? "nao_informado";
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [confirmEnd, setConfirmEnd] = useState(false);
@@ -290,17 +289,6 @@ function PlanInner({
     }
   }
 
-  async function savePattern(p: BreastfeedingPattern) {
-    setPattern(p);
-    if (!store || !profile) return;
-    const { id: _i, user_id: _u, created_at: _c, updated_at: _up, ...rest } = profile;
-    void _i;
-    void _u;
-    void _c;
-    void _up;
-    await store.upsertSingle("profiles", { ...rest, breastfeeding_pattern: p });
-  }
-
   const applyScenario = (k: ScenarioKey) => {
     const s = SCENARIOS[k];
     setScenario(k);
@@ -375,33 +363,10 @@ function PlanInner({
         <Card className="space-y-2 p-4">
           <CardTitle className="text-base">Como está a amamentação?</CardTitle>
           <CardHint>
-            A amamentação aumenta o gasto de energia, mas quanto varia muito de pessoa para pessoa.
-            Isso só ajusta a faixa de incerteza — não vira meta de ingestão.
+            Amamentar gasta energia, e isso entra no seu gasto estimado. Quanto varia muito de
+            pessoa para pessoa, então também alarga a faixa de incerteza. Não vira meta de ingestão.
           </CardHint>
-          <div
-            role="radiogroup"
-            aria-label="Padrão de amamentação"
-            className="grid grid-cols-3 gap-2"
-          >
-            {(
-              [
-                ["exclusiva", "Exclusiva"],
-                ["parcial", "Parcial"],
-                ["nao_informado", "Prefiro não dizer"],
-              ] as const
-            ).map(([k, l]) => (
-              <button
-                key={k}
-                type="button"
-                role="radio"
-                aria-checked={pattern === k}
-                onClick={() => savePattern(k)}
-                className={`min-h-11 rounded-xl border px-2 text-xs font-semibold ${pattern === k ? "border-forest bg-forest text-white" : "border-line bg-card text-ink"}`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
+          <BreastfeedingPatternPicker />
         </Card>
       )}
 

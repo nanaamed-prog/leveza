@@ -13,11 +13,13 @@ function Row({
   label,
   value,
   tone = "forest",
+  sub,
 }: {
   icon: typeof Flame;
   label: string;
   value: string;
   tone?: "forest" | "orange";
+  sub?: string;
 }) {
   return (
     <div className="flex items-center gap-3 py-2 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-line">
@@ -33,6 +35,7 @@ function Row({
         >
           {value}
         </p>
+        {sub && <p className="tabular text-[0.68rem] text-muted">{sub}</p>}
       </div>
     </div>
   );
@@ -121,6 +124,11 @@ export function EnergyBalanceCard({
             tone="orange"
             label="Gasto estimado"
             value={spent !== null ? `${fmtInt(spent)} kcal` : "—"}
+            sub={
+              energy && energy.elapsed.lactationKcal > 0
+                ? `inclui ~${fmtInt(energy.elapsed.lactationKcal)} kcal da amamentação`
+                : undefined
+            }
           />
           <Row
             icon={CalendarCheck}
@@ -140,6 +148,14 @@ export function EnergyBalanceCard({
                 ? ` O gasto mostrado é o estimado até agora; a projeção para 24 h é de ${isRange ? `${fmtInt(energy.projected24h.low)}–${fmtInt(energy.projected24h.high)}` : fmtInt(energy.projected24h.kcal)} kcal.`
                 : ""}{" "}
               Saldo é informação, não pontuação.
+            </p>
+          )}
+          {energy && energy.projected24h.lactationKcal > 0 && (
+            <p>
+              <strong>Amamentação:</strong> somamos cerca de{" "}
+              {fmtInt(energy.projected24h.lactationKcal)} kcal por dia ao seu gasto, distribuídos ao
+              longo do dia. É uma estimativa (varia muito de pessoa para pessoa) e não é uma meta de
+              quanto comer. Você pode ajustar o tipo de amamentação no Modo Lactante.
             </p>
           )}
           <p>

@@ -19,6 +19,9 @@ import { estimateBmr, type EquationParameter } from "./bmr";
 import { BASELINE_AWAKE_MET, SLEEP_MET, type ActivityLevel } from "./met";
 import { healthyWeightRange } from "./bmi";
 import type { Eligibility } from "./eligibility";
+import { LACTATION_COST_RANGE, type BreastfeedingPattern } from "./lactation";
+
+export type { BreastfeedingPattern } from "./lactation";
 
 export const ENERGY_DENSITY_KCAL_PER_KG = 7700;
 export const MIN_INTAKE_KCAL = 1200;
@@ -26,7 +29,6 @@ export const MAX_WEEKLY_LOSS_FRACTION = 0.01; // 1% do peso por semana
 export const MAX_WEEKS = 156; // 3 anos: além disso dizemos "não alcança com este cenário"
 
 export type ExerciseIntensity = "leve" | "moderada" | "intensa";
-export type BreastfeedingPattern = "exclusiva" | "parcial" | "nao_informado";
 
 /** METs de referência (Compendium of Physical Activities, valores típicos por intensidade). */
 export const INTENSITY_MET: Record<ExerciseIntensity, number> = {
@@ -39,13 +41,6 @@ export const INTENSITY_LABEL: Record<ExerciseIntensity, string> = {
   leve: "Leve",
   moderada: "Moderada",
   intensa: "Intensa",
-};
-
-/** Custo energético da amamentação como faixa (kcal/dia), não como valor a “compensar”. */
-export const LACTATION_COST_RANGE: Record<BreastfeedingPattern, [number, number]> = {
-  exclusiva: [300, 600],
-  parcial: [100, 400],
-  nao_informado: [100, 600],
 };
 
 export interface ExercisePlan {

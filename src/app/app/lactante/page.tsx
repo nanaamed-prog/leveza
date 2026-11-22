@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Baby, CircleAlert } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { BreastfeedingPatternPicker } from "@/components/leveza/BreastfeedingPatternPicker";
 import { Card, CardHint, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Field, Textarea } from "@/components/ui/form";
@@ -88,6 +89,17 @@ export default function LactationPage() {
           </li>
         </ul>
       </Card>
+
+      {eligibility.mode === "lactante" && (
+        <Card className="space-y-2">
+          <CardTitle>Como está a amamentação?</CardTitle>
+          <CardHint>
+            Amamentar gasta energia. O Leveza soma uma estimativa desse gasto ao seu gasto do dia e
+            ao saldo, conforme o tipo de amamentação.
+          </CardHint>
+          <BreastfeedingPatternPicker />
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-2 text-sm">
         {(

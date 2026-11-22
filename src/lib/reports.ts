@@ -36,6 +36,8 @@ export function buildDailyReport(p: {
   weights: WeightEntry[];
   bmrForWeight: (kg: number) => { kcal: number; low: number; high: number } | null;
   baselineMet: number;
+  /** Lactantes: custo diário estimado da amamentação (entra no gasto). */
+  lactation?: { kcal: number; low: number; high: number } | null;
   now?: number;
 }): DailyRow[] {
   const rows: DailyRow[] = [];
@@ -75,6 +77,7 @@ export function buildDailyReport(p: {
         bmrLow: bmr?.low ?? null,
         bmrHigh: bmr?.high ?? null,
         baselineMet: p.baselineMet,
+        lactation: p.lactation ?? null,
         sleeps: p.sleeps.map((s) => ({
           id: s.id,
           start: Date.parse(s.started_at),

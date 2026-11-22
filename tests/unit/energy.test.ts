@@ -1,3 +1,4 @@
+import { lactationCost } from "@/lib/calc/lactation";
 import {
   computeDayEnergy,
   activityIncrementKcal,
@@ -115,5 +116,37 @@ describe("gasto energético sem dupla contagem", () => {
     expect(energyBalance(1800, 2000)).toBe(-200);
     expect(describeBalance(-200)).toBe("200 kcal abaixo do gasto estimado");
     expect(describeBalance(30)).toBe("Consumo próximo do gasto estimado");
+  });
+});
+
+describe("amamentação no gasto do dia", () => {
+  const H2 = 3_600_000;
+  const day = {
+    dayStart: 0,
+    dayEnd: 24 * H2,
+    weightKg: 70,
+    bmrKcal: null,
+    baselineMet: 1.5,
+    sleeps: [],
+    activities: [],
+  };
+  it("soma o custo estimado ao gasto e à faixa, proporcional ao horário", () => {
+    const lac = lactationCost("exclusiva");
+    expect(lac).toMatchObject({ kcal: 450, low: 300, high: 600 });
+    const without = computeDayEnergy({ ...day, now: 12 * H2 });
+    const withLac = computeDayEnergy({ ...day, now: 12 * H2, lactation: lac });
+    expect(withLac.projected24h.kcal - without.projected24h.kcal).toBeCloseTo(450, 6);
+    expect(withLac.elapsed.kcal - without.elapsed.kcal).toBeCloseTo(225, 6);
+    expect(withLac.elapsed.lactationKcal).toBeCloseTo(225, 6);
+    expect(withLac.projected24h.low - without.projected24h.low).toBeCloseTo(300, 6);
+    expect(withLac.projected24h.high - without.projected24h.high).toBeCloseTo(600, 6);
+  });
+  it("sem amamentação nada muda", () => {
+    const r = computeDayEnergy({ ...day, now: 24 * H2, lactation: null });
+    expect(r.projected24h.lactationKcal).toBe(0);
+  });
+  it("parcial e não informado usam faixas próprias", () => {
+    expect(lactationCost("parcial").kcal).toBe(250);
+    expect(lactationCost(null).kcal).toBe(350);
   });
 });

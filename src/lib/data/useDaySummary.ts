@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useAppData, useRecords } from "./provider";
 import { dayRange } from "@/lib/dates";
 import { computeDayEnergy, type DayEnergyResult } from "@/lib/calc/energy";
+import { lactationCost } from "@/lib/calc/lactation";
 import { estimateBmr, type BmrEstimate } from "@/lib/calc/bmr";
 import { BASELINE_AWAKE_MET } from "@/lib/calc/met";
 import { sumMacros, type Macros } from "@/lib/calc/macros";
@@ -28,7 +29,13 @@ export interface DaySummary {
 }
 
 export function useDaySummary(dateKey: string): DaySummary {
-  const { tz, profile, screening, latestWeight } = useAppData();
+  const { tz, profile, screening, latestWeight, eligibility } = useAppData();
+  const isLactante = eligibility.mode === "lactante";
+  const pattern = profile?.breastfeeding_pattern;
+  const lactation = useMemo(
+    () => (isLactante ? lactationCost(pattern) : null),
+    [isLactante, pattern],
+  );
   const now = useNow(60_000);
   const { start, end } = useMemo(() => dayRange(dateKey, tz), [dateKey, tz]);
   const s = new Date(start).toISOString();
@@ -111,6 +118,7 @@ export function useDaySummary(dateKey: string): DaySummary {
             bmrLow: bmr?.low ?? null,
             bmrHigh: bmr?.high ?? null,
             baselineMet: BASELINE_AWAKE_MET[profile?.activity_level ?? "leve"],
+            lactation,
             sleeps: sleeps.data.map((x) => ({
               id: x.id,
               start: Date.parse(x.started_at),
@@ -138,7 +146,20 @@ export function useDaySummary(dateKey: string): DaySummary {
       bmr,
       energyMissing,
     };
-  }, [foods, items, water, sleeps, acts, start, end, screening, latestWeight, profile, now]);
+  }, [
+    foods,
+    items,
+    water,
+    sleeps,
+    acts,
+    start,
+    end,
+    screening,
+    latestWeight,
+    profile,
+    now,
+    lactation,
+  ]);
 }
 
 /** Fator individual (TMB ÷ peso×24) e dados básicos para estimativas fora do dashboard. */

@@ -49,12 +49,16 @@ export interface DayEnergyInput {
   baselineMet: number;
   sleeps: SleepPeriod[];
   activities: ActivityPeriod[];
+  /** Amamentação: custo diário estimado (central e faixa), distribuído ao longo do dia. */
+  lactation?: { kcal: number; low: number; high: number } | null;
 }
 
 export interface EnergyTotals {
   kcal: number;
   low: number;
   high: number;
+  /** Parte do total que vem da amamentação (0 quando não se aplica). */
+  lactationKcal: number;
   minutes: { sleep: number; activity: number; baseline: number };
   kcalBy: { sleep: number; activity: number; baseline: number };
 }
@@ -126,7 +130,7 @@ function integrate(
   to: number,
   input: DayEnergyInput,
   factor: number,
-): Omit<EnergyTotals, "low" | "high"> {
+): Omit<EnergyTotals, "low" | "high" | "lactationKcal"> {
   const minutes = { sleep: 0, activity: 0, baseline: 0 };
   const metHours = { sleep: 0, activity: 0, baseline: 0 };
   if (to <= from) return { kcal: 0, minutes, kcalBy: { sleep: 0, activity: 0, baseline: 0 } };
@@ -172,15 +176,28 @@ export function computeDayEnergy(input: DayEnergyInput): DayEnergyResult {
   const segs = toSegments(input);
   const nowClamped = Math.min(Math.max(input.now, input.dayStart), input.dayEnd);
 
-  const withRange = (t: Omit<EnergyTotals, "low" | "high">): EnergyTotals => ({
-    ...t,
-    low: t.kcal * lowRatio,
-    high: t.kcal * highRatio,
-  });
+  const lac = input.lactation ?? null;
+  const dayMs = input.dayEnd - input.dayStart;
+  const withRange = (
+    t: Omit<EnergyTotals, "low" | "high" | "lactationKcal">,
+    fraction: number,
+  ): EnergyTotals => {
+    const lk = lac ? lac.kcal * fraction : 0;
+    return {
+      ...t,
+      kcal: t.kcal + lk,
+      low: t.kcal * lowRatio + (lac ? lac.low * fraction : 0),
+      high: t.kcal * highRatio + (lac ? lac.high * fraction : 0),
+      lactationKcal: lk,
+    };
+  };
 
   return {
-    elapsed: withRange(integrate(segs, input.dayStart, nowClamped, input, factor)),
-    projected24h: withRange(integrate(segs, input.dayStart, input.dayEnd, input, factor)),
+    elapsed: withRange(
+      integrate(segs, input.dayStart, nowClamped, input, factor),
+      (nowClamped - input.dayStart) / dayMs,
+    ),
+    projected24h: withRange(integrate(segs, input.dayStart, input.dayEnd, input, factor), 1),
     overlaps: findOverlaps(segs, input.dayStart, input.dayEnd),
     factor,
   };

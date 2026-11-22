@@ -6,11 +6,18 @@ import { usePersonalBasics } from "./useDaySummary";
 import { addDays, dayRange } from "@/lib/dates";
 import { buildDailyReport } from "@/lib/reports";
 import { estimateBmr } from "@/lib/calc/bmr";
+import { lactationCost } from "@/lib/calc/lactation";
 import { todayKey } from "@/lib/utils";
 
 /** Linhas diárias (consumo, gasto estimado, saldo, peso…) dos últimos `days` dias. */
 export function useDailyReport(days: number) {
-  const { tz, profile } = useAppData();
+  const { tz, profile, eligibility } = useAppData();
+  const isLactante = eligibility.mode === "lactante";
+  const pattern = profile?.breastfeeding_pattern;
+  const lactation = useMemo(
+    () => (isLactante ? lactationCost(pattern) : null),
+    [isLactante, pattern],
+  );
   const basics = usePersonalBasics();
   const today = todayKey(tz);
   const from = new Date(dayRange(addDays(today, -days + 1), tz).start).toISOString();
@@ -44,6 +51,7 @@ export function useDailyReport(days: number) {
         acts: acts.data,
         weights: weights.data,
         baselineMet: basics.baselineMet,
+        lactation,
         bmrForWeight: (kg) =>
           basics.height && basics.age !== null && basics.age >= 18
             ? estimateBmr({
@@ -66,6 +74,7 @@ export function useDailyReport(days: number) {
       weights.data,
       basics,
       profile,
+      lactation,
     ],
   );
 
