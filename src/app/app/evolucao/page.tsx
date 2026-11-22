@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Pencil, Plus, Scale, Trash2 } from "lucide-react";
+import { ChevronRight, Pencil, Plus, Scale, Trash2, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardHint, CardTitle } from "@/components/ui/card";
@@ -78,6 +78,19 @@ export default function EvolutionPage() {
           </Button>
         }
       />
+      <Link
+        href="/app/plano-emagrecimento"
+        className="flex min-h-14 items-center gap-3 rounded-card border border-sage bg-sage-soft px-4 py-3 text-forest"
+      >
+        <TrendingDown className="size-5 shrink-0" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block font-display font-bold">Plano de Emagrecimento</span>
+          <span className="block text-xs text-ink/80">
+            Compare cenários e veja faixas de prazo até a sua meta
+          </span>
+        </span>
+        <ChevronRight className="size-5 shrink-0" aria-hidden />
+      </Link>
       <PeriodFilter value={period} onChange={setPeriod} />
 
       <PlusGate

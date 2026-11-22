@@ -271,3 +271,52 @@ describe("Assinaturas — ninguém se dá um plano pelo app", () => {
     expect((await as(B, "select * from public.ai_usage")).rows).toHaveLength(0);
   });
 });
+
+describe("Plano de emagrecimento no banco", () => {
+  const plan = (u: string, extra = "") => `insert into public.weight_plans
+    (user_id, start_weight_kg, target_weight_kg, intake_kcal, exercise_days, exercise_minutes, exercise_intensity, scenario${extra ? ", status" : ""})
+    values ('${u}', 82, 72, 1700, 4, 40, 'moderada', 'moderada'${extra ? `, '${extra}'` : ""}) returning id`;
+
+  it("pessoa elegível salva plano; o outro usuário não enxerga", async () => {
+    await as(A, okScreening(A));
+    await as(A, plan(A));
+    expect((await as(B, "select * from public.weight_plans")).rows).toHaveLength(0);
+  });
+
+  it("só um plano aberto por pessoa", async () => {
+    await expect(as(A, plan(A))).rejects.toThrow(/duplicate|unique/);
+  });
+
+  it("lactante não consegue salvar plano ativo (bloqueio no servidor)", async () => {
+    await as(
+      B,
+      `insert into public.health_screenings
+        (user_id, birth_date, pregnant, breastfeeding, eating_disorder, diabetes, hypoglycemia_meds, clinical_conditions, consent_health_data, consent_version)
+        values ('${B}', '1990-01-01', 'nao', 'sim', 'nao', 'nao', 'nao', '{nenhuma}', true, 'v1')`,
+    );
+    await expect(as(B, plan(B))).rejects.toThrow(/plan_not_allowed/);
+  });
+
+  it("ingestão abaixo de 1.200 kcal e treino intenso diário são recusados", async () => {
+    await as(A, "update public.weight_plans set status = 'encerrado'");
+    await expect(
+      as(
+        A,
+        `insert into public.weight_plans (user_id, start_weight_kg, target_weight_kg, intake_kcal, exercise_days, exercise_minutes, exercise_intensity, scenario)
+         values ('${A}', 82, 72, 1000, 3, 30, 'leve', 'leve')`,
+      ),
+    ).rejects.toThrow(/check constraint/);
+    await expect(
+      as(
+        A,
+        `insert into public.weight_plans (user_id, start_weight_kg, target_weight_kg, intake_kcal, exercise_days, exercise_minutes, exercise_intensity, scenario)
+         values ('${A}', 82, 72, 1700, 7, 30, 'intensa', 'personalizado')`,
+      ),
+    ).rejects.toThrow(/check constraint/);
+  });
+
+  it("pausar ou manter não exige elegibilidade, ativar exige", async () => {
+    const r = await as(A, plan(A, "pausado"));
+    expect(r.rows).toHaveLength(1);
+  });
+});

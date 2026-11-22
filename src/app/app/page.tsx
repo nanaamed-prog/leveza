@@ -372,6 +372,7 @@ export default function Dashboard() {
           ...(eligibility.mode === "lactante"
             ? [{ href: "/app/lactante", label: "Modo Lactante" }]
             : [{ href: "/app/jejum", label: "Jejum" }]),
+          { href: "/app/plano-emagrecimento", label: "Plano de Emagrecimento" },
           { href: "/app/plano", label: "Meu Plano" },
           { href: "/app/receitas", label: "Receitas" },
           { href: "/app/relatorios", label: "Relatórios" },

@@ -1,7 +1,3 @@
--- LEVEZA — instalação completa do banco (cole tudo de uma vez no SQL Editor do Supabase e clique em Run)
--- Equivale a rodar os arquivos de supabase/migrations na ordem.
-
--- ===== supabase/migrations/20261119000001_schema.sql =====
 -- =====================================================================
 -- LEVEZA — Esquema principal
 -- Todos os timestamps em UTC (timestamptz). Unidades métricas.
@@ -296,8 +292,6 @@ begin
     execute format('create trigger set_updated_at before update on public.%I for each row execute function public.set_updated_at()', t);
   end loop;
 end $$;
-
--- ===== supabase/migrations/20261119000002_rls.sql =====
 -- =====================================================================
 -- LEVEZA — Row Level Security
 -- Regra geral: cada pessoa só vê e altera as próprias linhas.
@@ -354,8 +348,6 @@ create policy recipe_items_delete_own on public.recipe_items for delete to authe
 -- Visitantes anônimos não acessam nada
 revoke all on all tables in schema public from anon;
 grant select, insert, update, delete on all tables in schema public to authenticated;
-
--- ===== supabase/migrations/20261119000003_safety.sql =====
 -- =====================================================================
 -- LEVEZA — Regras de segurança aplicadas também no banco
 -- (o cliente valida, mas o servidor é a fonte de verdade)
@@ -459,8 +451,6 @@ begin
 end $$;
 create trigger screening_close_fasting after insert on public.health_screenings
   for each row execute function public.close_fasting_if_ineligible();
-
--- ===== supabase/migrations/20261119000004_storage.sql =====
 -- =====================================================================
 -- LEVEZA — Storage privado de fotos das refeições
 -- Caminho obrigatório: <user_id>/<food_entry_id>.jpg
@@ -487,8 +477,6 @@ create policy food_photos_update_own on storage.objects for update to authentica
 
 create policy food_photos_delete_own on storage.objects for delete to authenticated
   using (bucket_id = 'food-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
-
--- ===== supabase/migrations/20261119000005_hardening.sql =====
 -- LEVEZA — endurecimento recomendado pelo Security Advisor do Supabase
 alter function public.set_updated_at() set search_path = '';
 alter function public.fasting_update_guard() set search_path = '';
@@ -496,8 +484,6 @@ revoke all on function public.screening_flags(uuid) from public, anon, authentic
 revoke execute on function public.enforce_fasting_rules() from public, anon, authenticated;
 revoke execute on function public.enforce_goal_rules() from public, anon, authenticated;
 revoke execute on function public.close_fasting_if_ineligible() from public, anon, authenticated;
-
--- ===== supabase/migrations/20261119000006_bowel.sql =====
 -- LEVEZA — Meu intestino: registro das evacuações (escala de Bristol), sem fotos.
 create table public.bowel_entries (
   id uuid primary key default gen_random_uuid(),
@@ -521,3 +507,143 @@ create policy bowel_entries_update_own on public.bowel_entries for update to aut
 create policy bowel_entries_delete_own on public.bowel_entries for delete to authenticated using (user_id = (select auth.uid()));
 revoke all on public.bowel_entries from anon;
 grant select, insert, update, delete on public.bowel_entries to authenticated;
+-- =====================================================================
+-- LEVEZA — Assinaturas (Mercado Pago)
+-- O usuário só LÊ a própria assinatura. Quem escreve é o servidor (webhook, service role)
+-- ou a função start_trial() — assim ninguém consegue se dar um plano pago pelo app.
+-- =====================================================================
+
+create table public.subscriptions (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  plan text not null check (plan in ('gratis','plus','plus_ia')),
+  period text check (period in ('mensal','anual')),
+  status text not null check (status in ('trial','active','past_due','canceled','expired')),
+  trial_ends_at timestamptz,
+  trial_used boolean not null default false,
+  current_period_end timestamptz,
+  provider text check (provider in ('mercadopago')),
+  provider_ref text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create trigger set_updated_at before update on public.subscriptions for each row execute function public.set_updated_at();
+
+create table public.payments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  provider text not null default 'mercadopago',
+  provider_payment_id text not null unique,
+  plan text not null,
+  period text not null,
+  amount numeric(10,2) not null,
+  status text not null,
+  created_at timestamptz not null default now()
+);
+create index on public.payments (user_id, created_at desc);
+
+create table public.ai_usage (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  kind text not null check (kind in ('foto','texto')),
+  created_at timestamptz not null default now()
+);
+create index on public.ai_usage (user_id, created_at desc);
+
+alter table public.subscriptions enable row level security;
+alter table public.subscriptions force row level security;
+create policy subscriptions_select_own on public.subscriptions for select to authenticated using (user_id = (select auth.uid()));
+
+alter table public.payments enable row level security;
+alter table public.payments force row level security;
+create policy payments_select_own on public.payments for select to authenticated using (user_id = (select auth.uid()));
+
+alter table public.ai_usage enable row level security;
+alter table public.ai_usage force row level security;
+create policy ai_usage_select_own on public.ai_usage for select to authenticated using (user_id = (select auth.uid()));
+create policy ai_usage_insert_own on public.ai_usage for insert to authenticated with check (user_id = (select auth.uid()));
+
+revoke all on public.subscriptions, public.payments, public.ai_usage from anon;
+revoke insert, update, delete on public.subscriptions, public.payments from authenticated;
+grant select on public.subscriptions, public.payments to authenticated;
+grant select, insert on public.ai_usage to authenticated;
+
+-- Teste grátis de 7 dias do Plus: uma única vez por conta.
+create or replace function public.start_trial() returns public.subscriptions
+language plpgsql security definer set search_path = public as $$
+declare uid uuid := auth.uid(); s public.subscriptions;
+begin
+  if uid is null then raise exception 'not_authenticated'; end if;
+  select * into s from public.subscriptions where user_id = uid;
+  if found then
+    if s.trial_used or s.status in ('active','past_due') then
+      raise exception 'trial_unavailable: o teste grátis já foi usado nesta conta' using errcode = 'P0001';
+    end if;
+    update public.subscriptions
+      set plan = 'plus', status = 'trial', trial_used = true, trial_ends_at = now() + interval '7 days'
+      where user_id = uid returning * into s;
+  else
+    insert into public.subscriptions (user_id, plan, status, trial_used, trial_ends_at)
+      values (uid, 'plus', 'trial', true, now() + interval '7 days') returning * into s;
+  end if;
+  return s;
+end $$;
+revoke all on function public.start_trial() from public, anon;
+grant execute on function public.start_trial() to authenticated;
+-- =====================================================================
+-- LEVEZA — Plano Inteligente de Emagrecimento
+-- Planos salvos (um ativo por pessoa) + padrão de amamentação no perfil.
+-- O banco também bloqueia: plano só para quem a triagem permite perda de peso
+-- (lactantes, gestantes, menores e histórico de transtorno alimentar ficam de fora)
+-- e ingestão nunca abaixo de 1.200 kcal.
+-- =====================================================================
+
+alter table public.profiles
+  add column if not exists breastfeeding_pattern text
+  check (breastfeeding_pattern in ('exclusiva','parcial','nao_informado'));
+
+create table public.weight_plans (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  start_weight_kg numeric(5,1) not null check (start_weight_kg between 25 and 400),
+  target_weight_kg numeric(5,1) not null check (target_weight_kg between 25 and 400),
+  intake_kcal integer not null check (intake_kcal between 1200 and 6000),
+  exercise_days smallint not null check (exercise_days between 0 and 7),
+  exercise_minutes smallint not null check (exercise_minutes between 0 and 240),
+  exercise_intensity text not null check (exercise_intensity in ('leve','moderada','intensa')),
+  scenario text not null check (scenario in ('leve','moderada','intensa','personalizado')),
+  eta_weeks_min smallint check (eta_weeks_min between 0 and 156),
+  eta_weeks_max smallint check (eta_weeks_max between 0 and 156),
+  status text not null default 'ativo' check (status in ('ativo','pausado','manutencao','encerrado')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint plan_rest check (not (exercise_intensity = 'intensa' and exercise_days > 5)),
+  constraint plan_volume check (exercise_days * exercise_minutes <= 600)
+);
+create unique index weight_plans_one_open on public.weight_plans(user_id) where status in ('ativo','pausado','manutencao');
+create index on public.weight_plans (user_id, created_at desc);
+create trigger set_updated_at before update on public.weight_plans for each row execute function public.set_updated_at();
+
+create or replace function public.enforce_weight_plan_rules() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare f record;
+begin
+  if new.status = 'ativo' then
+    select * into f from public.screening_flags(new.user_id);
+    if not coalesce(f.can_lose_weight, false) then
+      raise exception 'plan_not_allowed: plano de emagrecimento indisponível para este perfil' using errcode = 'P0001';
+    end if;
+  end if;
+  return new;
+end $$;
+revoke execute on function public.enforce_weight_plan_rules() from public, anon, authenticated;
+create trigger weight_plan_rules before insert or update on public.weight_plans
+  for each row execute function public.enforce_weight_plan_rules();
+
+alter table public.weight_plans enable row level security;
+alter table public.weight_plans force row level security;
+create policy weight_plans_select_own on public.weight_plans for select to authenticated using (user_id = (select auth.uid()));
+create policy weight_plans_insert_own on public.weight_plans for insert to authenticated with check (user_id = (select auth.uid()));
+create policy weight_plans_update_own on public.weight_plans for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy weight_plans_delete_own on public.weight_plans for delete to authenticated using (user_id = (select auth.uid()));
+revoke all on public.weight_plans from anon;
+grant select, insert, update, delete on public.weight_plans to authenticated;

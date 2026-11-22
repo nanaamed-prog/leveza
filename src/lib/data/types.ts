@@ -23,6 +23,7 @@ export interface Profile extends Row {
   sleep_routine: string | null;
   mode: Mode;
   onboarding_completed_at: string | null;
+  breastfeeding_pattern?: "exclusiva" | "parcial" | "nao_informado" | null;
 }
 
 export interface UserPreferences extends Row {
@@ -167,6 +168,21 @@ export interface WellbeingEntry extends Row {
   notes: string | null;
 }
 
+export type WeightPlanStatus = "ativo" | "pausado" | "manutencao" | "encerrado";
+
+export interface WeightPlan extends Row {
+  start_weight_kg: number;
+  target_weight_kg: number;
+  intake_kcal: number;
+  exercise_days: number;
+  exercise_minutes: number;
+  exercise_intensity: "leve" | "moderada" | "intensa";
+  scenario: "leve" | "moderada" | "intensa" | "personalizado";
+  eta_weeks_min: number | null;
+  eta_weeks_max: number | null;
+  status: WeightPlanStatus;
+}
+
 export interface BowelEntry extends Row {
   logged_at: string;
   bristol: number | null; // 1–7 (escala de Bristol)
@@ -193,6 +209,7 @@ export interface Tables {
   consents: Consent;
   wellbeing_entries: WellbeingEntry;
   bowel_entries: BowelEntry;
+  weight_plans: WeightPlan;
 }
 
 export type TableName = keyof Tables;
@@ -217,6 +234,7 @@ export const DATE_FIELD: Partial<Record<TableName, string>> = {
   consents: "created_at",
   wellbeing_entries: "logged_at",
   bowel_entries: "logged_at",
+  weight_plans: "created_at",
   recipes: "created_at",
 };
 
@@ -238,6 +256,7 @@ export const ALL_TABLES: TableName[] = [
   "consents",
   "wellbeing_entries",
   "bowel_entries",
+  "weight_plans",
 ];
 
 export const CONSENT_VERSION = "2026-11-v1";

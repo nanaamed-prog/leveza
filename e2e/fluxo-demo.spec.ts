@@ -106,7 +106,7 @@ test("descrever refeição por texto encontra os alimentos", async ({ page }) =>
   await expect(page.getByRole("textbox", { name: "Nome do alimento" })).toHaveCount(4);
   await page.screenshot({ path: "test-results/07-descrever.png", fullPage: true });
   await page.getByRole("button", { name: "Salvar refeição" }).click();
-  await expect(page.getByText("Pão francês")).toBeVisible();
+  await expect(page.getByText("Pão francês").first()).toBeVisible();
 });
 
 test("meu intestino: registro rápido e detalhado", async ({ page }) => {
@@ -231,4 +231,40 @@ test("resetar o dia e resetar todos os dias", async ({ page }) => {
   await expect(page.getByText("Todos os registros diários foram apagados")).toBeVisible();
   await page.goto("/app");
   await expect(page.getByRole("heading", { name: /Ana/ })).toBeVisible();
+});
+
+test("plano de emagrecimento: cenários, simulador e bloqueio de cenário inseguro", async ({
+  page,
+}) => {
+  await onboard(page);
+  await page.goto("/app/plano-emagrecimento");
+  await expect(page.getByRole("heading", { name: "Plano de Emagrecimento" })).toBeVisible();
+  await page.getByLabel("Peso desejado (kg)").fill("62");
+  await expect(page.getByRole("region", { name: "Comparador de atividades" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Moderada/ }).first()).toBeVisible();
+  await expect(page.getByText("Tempo estimado até a meta")).toBeVisible();
+  await page.screenshot({ path: "test-results/09-plano.png", fullPage: true });
+  // ingestão muito baixa → não pode virar plano
+  await page.getByLabel("Ingestão por dia").fill("1000");
+  await expect(page.getByText("Esta simulação não pode virar plano")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Salvar plano/ })).toBeDisabled();
+  // cenário gradual → pode salvar
+  await page.getByLabel("Ingestão por dia").fill("1800");
+  await page.getByRole("button", { name: /^Moderada/ }).click();
+  const save = page.getByRole("button", { name: /Salvar plano/ });
+  await expect(save).toBeEnabled();
+  await save.click();
+  await expect(page.getByText(/Plano salvo/)).toBeVisible();
+  await page.getByRole("button", { name: "Pausar" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /Plano pausado/ })).toBeVisible();
+});
+
+test("plano de emagrecimento no Modo Lactante é só informativo", async ({ page }) => {
+  await onboard(page, { breastfeeding: true });
+  await page.goto("/app/plano-emagrecimento");
+  await expect(page.getByText(/Modo Lactante — projeções apenas informativas/)).toBeVisible();
+  await expect(page.getByRole("radiogroup", { name: "Padrão de amamentação" })).toBeVisible();
+  await expect(page.getByText("Somente informação")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Salvar plano/ })).toHaveCount(0);
+  await page.screenshot({ path: "test-results/10-plano-lactante.png", fullPage: true });
 });
